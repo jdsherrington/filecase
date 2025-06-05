@@ -1,0 +1,67 @@
+# .gitignore
+
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# Bun lockfile (should be committed, but some prefer to ignore if strictly using bun install from package.json)
+# For now, let's commit it. If you decide otherwise, add:
+# bun.lockb
+
+# Environment variables
+.env
+**/.env
+*.env.local
+*.env.*.local
+
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+out/
+.next/
+.vercel/
+.output/
+
+# Log files
+*.log
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-debug.log* # If Bun creates debug logs
+
+# OS generated files
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# IDEs and editors
+.idea/
+.vscode/
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# Drizzle kit local state (migrations in `drizzle/` folder SHOULD be committed)
+# If drizzle-kit creates other local-only files, add them here.
+# The `drizzle` folder itself containing SQL migrations should NOT be ignored.
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# NestJS specific
+/apps/api/dist # NestJS build output
+# If you have specific cache or temp files from NestJS add them
+
+# TanStack Start / Vite specific
+/apps/web/dist # Vite build output
+.vite/ # Vite cache

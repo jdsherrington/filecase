@@ -1,0 +1,26 @@
+{
+  "name": "filecase-app",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "(cd apps/api && bun run start:dev)",
+    "dev:web": "(cd apps/web && bun run dev)"
+  },
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "trustedDependencies": [
+    "@clerk/shared",
+    "@nestjs/core",
+    "@parcel/watcher",
+    "@swc/core"
+  ]
+}

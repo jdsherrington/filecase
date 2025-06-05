@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@filecase-app/shared-types": ["packages/shared-types/src"]
+    }
+  }
+}
