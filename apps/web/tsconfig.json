@@ -1,22 +1,67 @@
+// web/tsconfig.json
+
+// This is the TypeScript configuration file (`tsconfig.json`) for the `web` frontend application.
+// Its primary role is to instruct the TypeScript compiler on how to process, type-check, and
+// interpret the project's `.ts` and `.tsx` files. It's essential for maintaining code quality
+// through strict type-checking, enabling modern JavaScript features, and correctly handling
+// browser-specific APIs (like the DOM) and React's JSX syntax. Within the monorepo, this file
+// is specifically tailored for the client-side environment, distinct from the backend's
+// configuration, and establishes helpful import aliases (`~/*`) for improved code organization
+// within the `web` app.
+
 {
+  // "include" tells the TypeScript compiler which files to include in the compilation process.
+  // The "**/*" pattern means it will look for files in all subdirectories.
   "include": ["**/*.ts", "**/*.tsx"],
+
+  // "compilerOptions" is the core of the file, containing the specific rules and settings for the compiler.
   "compilerOptions": {
+    // "strict": true enables a wide range of strict type-checking options, catching more potential errors at compile time. This is a highly recommended best practice.
     "strict": true,
+
+    // "esModuleInterop": true allows for better compatibility between CommonJS and ES modules, enabling cleaner imports for libraries that use older module formats.
     "esModuleInterop": true,
+
+    // "jsx": "react-jsx" tells TypeScript how to handle JSX syntax (<div />). "react-jsx" is the modern transform (used by React 17+) that automatically imports the necessary functions, so you don't need to 'import React' in every file.
     "jsx": "react-jsx",
+
+    // "module": "ESNext" specifies the module system for the generated code. "ESNext" tells it to use the latest ECMAScript module features, which is ideal for modern bundlers that can perform optimizations like tree-shaking (removing unused code).
     "module": "ESNext",
+
+    // "moduleResolution": "Bundler" tells TypeScript to mimic the module resolution strategy of a modern bundler (like Vite, esbuild, or Bun). This is the recommended setting for modern web apps, as it correctly handles modern package features.
     "moduleResolution": "Bundler",
+
+    // "lib" specifies which built-in TypeScript library definition files to include. "DOM" and "DOM.Iterable" provide types for browser APIs (like `document`, `window`). "ES2022" provides types for JavaScript features up to the 2022 standard.
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
+
+    // "isolatedModules": true ensures that each file can be safely compiled on its own, without relying on other files. This is a requirement for some fast build tools and parallel transpilers.
     "isolatedModules": true,
+
+    // "resolveJsonModule": true allows you to import JSON files directly into your code as if they were JavaScript modules.
     "resolveJsonModule": true,
+
+    // "skipLibCheck": true tells the compiler to not type-check the declaration files (.d.ts) of your dependencies (in node_modules). This significantly speeds up the type-checking process.
     "skipLibCheck": true,
+
+    // "target": "ES2022" sets the JavaScript version that your TypeScript code will be compiled down to. "ES2022" is a modern target, assuming that your users will have up-to-date browsers that support these features.
     "target": "ES2022",
+
+    // "allowJs": true allows you to have .js files alongside your .ts files and import them into your project.
     "allowJs": true,
+
+    // "forceConsistentCasingInFileNames": true enforces that the casing of file names in imports must match the actual file name on disk. This prevents bugs on case-sensitive operating systems like Linux.
     "forceConsistentCasingInFileNames": true,
+
+    // "baseUrl": "." sets the root directory for resolving non-relative module paths. This is the foundation for the "paths" option below. "." means the current directory (where this tsconfig.json is).
     "baseUrl": ".",
+
+    // "paths" creates custom import aliases for cleaner and more maintainable import statements.
     "paths": {
+      // This line creates an alias where `~/` maps to the `src/` directory. So, you can write `import MyComponent from '~/components/MyComponent'` instead of `import MyComponent from '../../components/MyComponent'`.
       "~/*": ["./src/*"]
     },
+
+    // "noEmit": true is a critical setting for modern frontend projects. It tells TypeScript to only perform type-checking and NOT to generate any output JavaScript files. The bundling and transpilation are handled by a dedicated tool (like Vite or Bun's bundler), while `tsc` is used purely as a type-checker.
     "noEmit": true
   }
 }

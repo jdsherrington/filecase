@@ -22,5 +22,8 @@
     "@nestjs/core",
     "@parcel/watcher",
     "@swc/core"
-  ]
+  ],
+  "dependencies": {
+    "@clerk/tanstack-react-start": "^0.18.0"
+  }
 }

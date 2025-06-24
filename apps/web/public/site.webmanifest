@@ -1,19 +1,46 @@
+// web/public/site.webmanifest
+
+// This file is the Web App Manifest, a standard JSON file that provides essential metadata about your web application to the browser. It is required for enabling Progressive Web App (PWA) features, which allow users to "install" your website onto their device's home screen and launch it like a native application. In the context of your overall project, this file is a crucial piece of the frontend (`apps/web`) user experience, defining how the application looks and behaves when it's treated as an "app" on a user's phone or desktop, bridging the gap between a simple website and a more integrated, app-like experience.
+
 {
+  // The full, official name of your web application. This is typically used in installation prompts or app stores. You should fill this in.
   "name": "",
+
+  // A shorter name for the application, used in places where there isn't enough room for the full name, such as under the app icon on a home screen. You should also fill this in.
   "short_name": "",
+
+  // An array that lists the different icons for your application. Providing multiple sizes allows the operating system to pick the best one for different contexts (e.g., home screen, notifications, splash screen).
   "icons": [
+    // The start of the first icon's definition object.
     {
+      // The path to the icon image file. The leading "/" means the path is relative to the root of your website (i.e., it's in the `public` folder).
       "src": "/android-chrome-192x192.png",
+      // Specifies the dimensions of the icon image, so the browser knows its size without having to load it first.
       "sizes": "192x192",
+      // The MIME type of the image file, which helps the browser understand the file format.
       "type": "image/png"
+    // The end of the first icon object. The comma separates it from the next icon in the list.
     },
+    // The start of the second icon's definition object.
     {
+      // The path to a larger, higher-resolution version of the icon.
       "src": "/android-chrome-512x512.png",
+      // The dimensions of this larger icon.
       "sizes": "512x512",
+      // The MIME type for this icon.
       "type": "image/png"
+    // The end of the second (and last) icon object.
     }
+  // The end of the "icons" array.
   ],
+
+  // Defines the default theme color for the application. On mobile browsers, this can affect the color of the browser's UI, like the address bar or the device's status bar. Here, it's set to white.
   "theme_color": "#ffffff",
+
+  // The background color of the splash screen that is displayed when the application is launched from the home screen, before the web content has fully loaded. Here, it's set to white.
   "background_color": "#ffffff",
+
+  // This controls how the application is displayed when launched. "standalone" makes it look and feel like a native app, hiding standard browser UI elements like the URL bar.
   "display": "standalone"
+// The end of the JSON manifest object.
 }
