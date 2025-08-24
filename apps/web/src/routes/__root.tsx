@@ -12,6 +12,7 @@ component is the top-level parent, and all other page components are rendered in
 */
 
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
+import { shadcn } from "@clerk/themes";
 import { ThemeProvider } from "../components/theme-provider";
 import {
   HeadContent, // A component that renders the metadata defined in the route's `head` option.
@@ -26,11 +27,21 @@ import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
 import appCss from "~/styles/app.css?url";
 import { seo } from "~/utils/seo";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useMutation,
+  useQuery,
+} from "@tanstack/react-query";
+import { CompleteProfileDialog } from "~/components/CompleteProfileDialog";
+import { api } from "~/api";
 
 // Defines a TypeScript interface for the router's context. This allows type-safe access to shared data, like authentication status, across routes.
 interface MyRouterContext {
   auth: ReturnType<typeof useAuth>; // The context will contain authentication data provided by the `useAuth` hook from Clerk.
 }
+
+const queryClient = new QueryClient();
 
 // Exports the route configuration, created using TanStack Router's `createRootRoute` function. This is how the file-based router discovers this root layout.
 export const Route = createRootRoute<MyRouterContext>({
@@ -90,13 +101,55 @@ export const Route = createRootRoute<MyRouterContext>({
   component: RootComponent,
 });
 
-// This is the primary functional component for the root route.
 function RootComponent() {
-  // It returns the main document structure.
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+        <ClerkProvider
+          appearance={{
+            baseTheme: shadcn,
+          }}
+        >
+          <AppWithAuth />
+        </ClerkProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
+
+function AppWithAuth() {
+  const { isSignedIn } = useAuth();
+  const { data: user, refetch } = useQuery({
+    queryKey: ["user", "me"],
+    queryFn: api.users.getMe,
+    enabled: !!isSignedIn,
+  });
+
+  const { mutate } = useMutation({
+    mutationFn: api.users.updateMe,
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isSignedIn && user && (!user.firstName || !user.lastName)) {
+      setIsProfileDialogOpen(true);
+    } else {
+      setIsProfileDialogOpen(false);
+    }
+  }, [user, isSignedIn]);
+
   return (
     <RootDocument>
-      {/* The <Outlet /> is a placeholder where TanStack Router will render the matched child route's component (e.g., the home page, about page, etc.). */}
       <Outlet />
+      <CompleteProfileDialog
+        open={isProfileDialogOpen}
+        onOpenChange={setIsProfileDialogOpen}
+        onSubmit={mutate}
+      />
     </RootDocument>
   );
 }
@@ -105,26 +158,33 @@ function RootComponent() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   // It returns JSX that forms the complete HTML page.
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-      <ClerkProvider>
-        {/* The root HTML element of the page. */}
-        <html>
-          {/* The head section of the HTML document. */}
-          <head>
-            {/* A special component from TanStack Router that injects the `head` configuration (meta tags, links) defined in the route configuration above. */}
-            <HeadContent />
-          </head>
-          {/* The body section of the HTML document. */}
-          <body>
-            {/* This renders the child content passed into this component, which is the page content from the <Outlet />. */}
-            {children}
-            {/* Includes the TanStack Router Devtools component for debugging, positioned at the bottom-right of the screen. */}
-            <TanStackRouterDevtools position="bottom-right" />
-            {/* A special component from TanStack Router that injects the necessary <script> tags for the application to run on the client side. */}
-            <Scripts />
-          </body>
-        </html>
-      </ClerkProvider>
-    </ThemeProvider>
+    // The root HTML element of the page.
+    <html>
+      {/* The head section of the HTML document. */}
+      <head>
+        <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+                    const theme = (() => {
+                      const storedTheme = localStorage.getItem('ui-theme');
+                      if (storedTheme) return storedTheme;
+                      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    })();
+                    document.documentElement.classList.add(theme);
+                  `,
+          }}
+        />
+      </head>
+      {/* The body section of the HTML document. */}
+      <body>
+        {/* This renders the child content passed into this component, which is the page content from the <Outlet />. */}
+        {children}
+        {/* Includes the TanStack Router Devtools component for debugging, positioned at the bottom-right of the screen. */}
+        <TanStackRouterDevtools position="bottom-right" />
+        {/* A special component from TanStack Router that injects the necessary <script> tags for the application to run on the client side. */}
+        <Scripts />
+      </body>
+    </html>
   );
 }

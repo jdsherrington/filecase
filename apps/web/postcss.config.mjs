@@ -18,7 +18,7 @@ export default {
     // and generates the actual CSS that styles your components.
     // The empty object `{}` tells the plugin to use its default configuration,
     // which includes looking for a 'tailwind.config.mjs' file for your custom theme settings.
-    tailwindcss: {},
+    '@tailwindcss/postcss': {},
 
     // This line enables the Autoprefixer plugin.
     // It automatically adds browser-specific prefixes to CSS properties to ensure
@@ -26,6 +26,5 @@ export default {
     // it can turn `display: flex` into `display: -webkit-flex; display: flex;`.
     // The empty object `{}` means it will use its default settings, typically
     // determined by a `browserslist` configuration in your `package.json`.
-    autoprefixer: {},
   },
 };

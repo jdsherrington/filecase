@@ -1,29 +1,29 @@
 // web/src/routes/index.tsx
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { AppLayout } from "~/components/AppLayout";
-import { LandingPage } from "~/components/LandingPage";
+import * as React from "react";
 
 // This is our main "dispatcher" component for the root route.
 function Index() {
   const { isSignedIn, isLoaded } = useAuth();
+  const navigate = useNavigate();
 
-  // While Clerk is determining the auth state, render nothing to avoid flicker.
-  if (!isLoaded) {
+  React.useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate({
+        to: "/sign-in",
+      });
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  if (!isLoaded || !isSignedIn) {
     return null;
   }
 
-  // Based on the sign-in status, render the correct entire UI.
-  if (isSignedIn) {
-    // If the user is logged in, render the full application dashboard.
-    return <AppLayout />;
-  } else {
-    // If the user is logged out, render the public marketing page.
-    return <LandingPage />;
-  }
+  return <AppLayout />;
 }
-
 // Configure the route for `/`
 export const Route = createFileRoute("/")({
   component: Index,

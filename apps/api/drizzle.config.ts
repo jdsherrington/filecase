@@ -1,15 +1,13 @@
-// apps/api/drizzle.config.ts
 import type { Config } from 'drizzle-kit';
 import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env' }); // Ensure .env is loaded
+dotenv.config({ path: '.env' });
 
 export default {
   schema: './src/db/schema.ts',
   out: './drizzle',
-  dialect: 'postgresql', // Specifies the database system
-  // driver: 'pg', // <--- REMOVE THIS LINE
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL!, // Drizzle infers usage of 'pg' driver from this with dialect
+    url: process.env.DATABASE_URL!,
   },
   verbose: true,
   strict: true,

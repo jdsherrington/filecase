@@ -24,7 +24,6 @@ export function TopBar() {
     <header className="border-b h-16 flex items-center px-4 gap-4 justify-between">
       <div className="justify-self-start flex items-center gap-4">
         <SidebarTrigger />
-        <div className="font-semibold text-lg">Dashboard</div>
         <Menubar>
           <MenubarMenu>
             <MenubarTrigger>File</MenubarTrigger>

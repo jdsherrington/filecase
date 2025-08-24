@@ -58,7 +58,8 @@
     // "paths" creates custom import aliases for cleaner and more maintainable import statements.
     "paths": {
       // This line creates an alias where `~/` maps to the `src/` directory. So, you can write `import MyComponent from '~/components/MyComponent'` instead of `import MyComponent from '../../components/MyComponent'`.
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@/*": ["./src/*"]
     },
 
     // "noEmit": true is a critical setting for modern frontend projects. It tells TypeScript to only perform type-checking and NOT to generate any output JavaScript files. The bundling and transpilation are handled by a dedicated tool (like Vite or Bun's bundler), while `tsc` is used purely as a type-checker.

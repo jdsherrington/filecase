@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 import { NavMain } from "~/components/nav-main";
-import { NavProjects } from "~/components/nav-projects";
 import { NavUser } from "~/components/nav-user";
 import { TeamSwitcher } from "~/components/team-switcher";
 import {
@@ -50,41 +49,24 @@ const data = {
   ],
   navMain: [
     {
-      title: "Vault",
-      url: "#",
+      title: "Files",
+      url: "/",
       icon: Files,
     },
     {
       title: "Library",
-      url: "#",
+      url: "/library",
       icon: BookOpen,
     },
     {
-      title: "Clients",
-      url: "#",
+      title: "Contacts",
+      url: "/contacts",
       icon: UserRound,
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: Settings,
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 };

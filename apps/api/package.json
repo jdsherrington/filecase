@@ -19,7 +19,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx ./src/db/migrate.ts"
+    "db:migrate": "tsx ./src/db/migrate.ts",
+    "db:push": "drizzle-kit push",
+    "db:introspect": "drizzle-kit introspect"
   },
   "dependencies": {
     "@clerk/backend": "^2.0.0",
@@ -29,6 +31,8 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
     "drizzle-orm": "^0.44.2",
     "passport": "^0.7.0",
     "passport-custom": "^1.1.1",
