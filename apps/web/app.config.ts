@@ -7,7 +7,7 @@ This file serves as the central configuration for the frontend 'web' application
 // Import the 'defineConfig' helper function from the TanStack Start configuration library.
 // This function doesn't do much at runtime, but it provides TypeScript type-checking and
 // autocompletion for the configuration object below, preventing typos and common mistakes.
-import { defineConfig } from "@tanstack/react-start/config";
+import { defineConfig } from "@tanstack/start/config";
 
 // Import the vite-tsconfig-paths plugin. This plugin allows Vite (the build tool) to
 // understand and resolve the path aliases you might define in your 'tsconfig.json' file.

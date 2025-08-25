@@ -28,22 +28,13 @@ export function ThemeProvider({
   storageKey = "ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // 1. Initialize with the default theme. This is safe to run on the server
-  //    because it doesn't access any browser APIs.
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
+    }
+    return defaultTheme;
+  });
 
-  // 2. Use useEffect to handle all browser-specific logic.
-  //    This hook will only run on the client side after the component mounts.
-  useEffect(() => {
-    // Read the theme from localStorage.
-    const storedTheme =
-      (localStorage.getItem(storageKey) as Theme) || defaultTheme;
-    // Update the state with the stored or default theme.
-    setTheme(storedTheme);
-  }, []); // The empty dependency array ensures this runs only once on mount.
-
-  // This second useEffect handles applying the theme to the DOM.
-  // It will run whenever the `theme` state changes.
   useEffect(() => {
     const root = window.document.documentElement;
 
@@ -62,7 +53,9 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (newTheme: Theme) => {
-      localStorage.setItem(storageKey, newTheme);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(storageKey, newTheme);
+      }
       setTheme(newTheme);
     },
   };

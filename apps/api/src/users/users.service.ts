@@ -6,14 +6,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  async getUserByClerkId(clerkUserId: string) {
-    const user = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId));
+  async getUserByClerkId(clerkId: string) {
+    const user = await db.select().from(users).where(eq(users.clerkId, clerkId));
     return user[0];
   }
 
-  async updateUser(clerkUserId: string, updateUserDto: UpdateUserDto) {
+  async updateUser(clerkId: string, updateUserDto: UpdateUserDto) {
     const { firstName, lastName } = updateUserDto;
-    const updatedUser = await db.update(users).set({ firstName, lastName }).where(eq(users.clerkUserId, clerkUserId)).returning();
+    const updatedUser = await db.update(users).set({ firstname: firstName, lastname: lastName }).where(eq(users.clerkId, clerkId)).returning();
     return updatedUser[0];
   }
 }

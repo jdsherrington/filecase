@@ -4,9 +4,9 @@ import { users } from '~/db/schema';
 
 @Injectable()
 export class AuthService {
-  async createUserFromClerk(clerkUserId: string, email: string) {
+  async createUserFromClerk(clerkId: string, email: string) {
     await db.insert(users).values({
-      clerkUserId,
+      clerkId,
       email,
     });
   }

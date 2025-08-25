@@ -33,8 +33,10 @@ import {
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
-import { CompleteProfileDialog } from "~/components/CompleteProfileDialog";
-import { api } from "~/api";
+import { CompleteProfileDialog } from '~/components/CompleteProfileDialog';
+import { CreateOrganizationDialog } from '~/components/CreateOrganizationDialog';
+import { api } from '~/api';
+import Cookies from 'js-cookie';
 
 // Defines a TypeScript interface for the router's context. This allows type-safe access to shared data, like authentication status, across routes.
 interface MyRouterContext {
@@ -118,37 +120,86 @@ function RootComponent() {
 }
 
 function AppWithAuth() {
-  const { isSignedIn } = useAuth();
-  const { data: user, refetch } = useQuery({
+  const { isSignedIn, getToken } = useAuth();
+  const { data: user, refetch: refetchUser } = useQuery({
     queryKey: ["user", "me"],
-    queryFn: api.users.getMe,
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+      return api.users.getMe({ token });
+    },
     enabled: !!isSignedIn,
   });
 
-  const { mutate } = useMutation({
-    mutationFn: api.users.updateMe,
+  const { data: orgCheck, refetch: refetchOrgCheck } = useQuery({
+    queryKey: ["org", "check"],
+    queryFn: async () => {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+      return api.orgs.check({ token });
+    },
+    enabled: false, // Initially disabled
+  });
+
+  const { mutate: updateUser } = useMutation({
+    mutationFn: async (data: { firstName: string; lastName: string }) => {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+      return api.users.updateMe({ token, data });
+    },
     onSuccess: () => {
-      refetch();
+      refetchUser();
+      refetchOrgCheck();
     },
   });
 
-  const [isProfileDialogOpen, setIsProfileDialogOpen] = React.useState(false);
+  const { mutate: createOrganization } = useMutation({
+    mutationFn: async (data: { name: string }) => {
+      const token = await getToken();
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+      return api.orgs.create({ token, data });
+    },
+    onSuccess: () => {
+      refetchOrgCheck();
+    },
+  });
 
   React.useEffect(() => {
-    if (isSignedIn && user && (!user.firstName || !user.lastName)) {
-      setIsProfileDialogOpen(true);
-    } else {
-      setIsProfileDialogOpen(false);
+    if (isSignedIn) {
+      refetchOrgCheck();
     }
-  }, [user, isSignedIn]);
+  }, [isSignedIn, refetchOrgCheck]);
+
+  React.useEffect(() => {
+    if (orgCheck?.orgId) {
+      Cookies.set('orgId', orgCheck.orgId);
+    }
+  }, [orgCheck]);
+
+  const isProfileComplete = isSignedIn && user && user.firstname && user.lastname;
+  const hasOrg = orgCheck?.hasOrg;
+
+  const showCreateOrgDialog = isProfileComplete && !hasOrg;
 
   return (
     <RootDocument>
-      <Outlet />
+      {isProfileComplete && hasOrg ? <Outlet /> : null}
       <CompleteProfileDialog
-        open={isProfileDialogOpen}
-        onOpenChange={setIsProfileDialogOpen}
-        onSubmit={mutate}
+        open={!isProfileComplete}
+        onSubmit={updateUser}
+      />
+      <CreateOrganizationDialog
+        open={showCreateOrgDialog}
+        user={user}
+        onSubmit={createOrganization}
       />
     </RootDocument>
   );
@@ -159,7 +210,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   // It returns JSX that forms the complete HTML page.
   return (
     // The root HTML element of the page.
-    <html>
+    <html suppressHydrationWarning>
       {/* The head section of the HTML document. */}
       <head>
         <HeadContent />

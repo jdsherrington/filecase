@@ -1,14 +1,56 @@
 import ky from 'ky';
 
-const api = {
+const api = ky.create({
+  prefixUrl: 'http://localhost:3001',
+});
+
+const userApi = {
   users: {
-    getMe: async () => {
-      return await ky.get('/api/users/me').json();
+    getMe: async ({ token }: { token: string }) => {
+      return await api.get('users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).json();
     },
-    updateMe: async (data: { firstName: string; lastName: string }) => {
-      return await ky.patch('/api/users/me', { json: data }).json();
+    updateMe: async ({
+      token,
+      data,
+    }: {
+      token: string;
+      data: { firstName: string; lastName: string };
+    }) => {
+      return await api.patch('users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        json: data,
+      }).json();
+    },
+  },
+  orgs: {
+    check: async ({ token }: { token: string }) => {
+      return await api.get('orgs/check', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).json();
+    },
+    create: async ({
+      token,
+      data,
+    }: {
+      token: string;
+      data: { name: string };
+    }) => {
+      return await api.post('orgs', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        json: data,
+      }).json();
     },
   },
 };
 
-export { api };
+export { userApi as api };

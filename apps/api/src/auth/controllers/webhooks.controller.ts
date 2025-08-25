@@ -71,11 +71,41 @@ export class WebhooksController {
     @Headers('svix-id') svixId: string,
     @Headers('svix-timestamp') svixTimestamp: string,
     @Headers('svix-signature') svixSignature: string,
-    @Body() payload: ClerkWebhookEvent | string,
+    @Body() payload: ClerkWebhookEvent,
   ) {
-    // ... (rest of the logic)
-    this.logger.log('Received Clerk webhook via /auth/webhooks/clerk');
-    // ...
+    const headers = {
+      'svix-id': svixId,
+      'svix-timestamp': svixTimestamp,
+      'svix-signature': svixSignature,
+    };
+
+    let verifiedPayload: ClerkWebhookEvent;
+    try {
+      verifiedPayload = this.wh.verify(JSON.stringify(payload), headers) as ClerkWebhookEvent;
+    } catch (err) {
+      this.logger.error('Webhook verification failed', err.message);
+      throw new BadRequestException('Webhook verification failed');
+    }
+
+    const { type, data } = verifiedPayload;
+
+    this.logger.log(`Received webhook event: ${type}`);
+
+    switch (type) {
+      case 'user.created':
+        try {
+          await this.authService.createUserFromClerk(data.id, data.email_addresses[0].email_address);
+          this.logger.log(`User created with Clerk ID: ${data.id}`);
+        } catch (error) {
+          this.logger.error('Failed to create user from webhook', error);
+          throw new InternalServerErrorException('Failed to process user creation');
+        }
+        break;
+      // Add other cases for user.updated, user.deleted as needed
+      default:
+        this.logger.log(`Unhandled webhook event type: ${type}`);
+    }
+
     return { received: true };
   }
 }

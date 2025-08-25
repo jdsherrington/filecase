@@ -1,3 +1,4 @@
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,16 +21,14 @@ import {
 import { Input } from '@/components/ui/input';
 
 const formSchema = z.object({
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
+  name: z.string().min(1, { message: 'Organization name is required' }),
 });
 
-export function CompleteProfileDialog({ open, onSubmit }) {
+export function CreateOrganizationDialog({ open, user, onSubmit }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      name: '',
     },
   });
 
@@ -37,40 +36,27 @@ export function CompleteProfileDialog({ open, onSubmit }) {
     <Dialog open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Complete your profile</DialogTitle>
+          <DialogTitle>Hi {user?.firstname}</DialogTitle>
           <DialogDescription>
-            Please enter your first and last name to continue.
+            Enter a name for your organization
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="firstName"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>Organization Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John" {...field} />
+                    <Input placeholder="Acme Inc." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit">Continue</Button>
+            <Button type="submit">Create</Button>
           </form>
         </Form>
       </DialogContent>
