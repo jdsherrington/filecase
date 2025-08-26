@@ -44,36 +44,31 @@ CREATE TABLE "orgs" (
 	"dateModified" timestamp DEFAULT now() NOT NULL,
 	"accentColor" varchar(10),
 	"avatarStorageId" varchar(256),
-	"filesStatus" varchar(80)[] DEFAULT '{"RAY['Draft'::text","'Final'::tex"}',
-	"libraryStatus" varchar(80)[] DEFAULT '{"RAY['Draft'::text","'Published'::tex"}',
+	"filesStatus" varchar(80)[] DEFAULT '{"Draft","Final"}',
+	"libraryStatus" varchar(80)[] DEFAULT '{"Draft","Published"}',
 	"isDeleted" varchar(1) DEFAULT 'N' NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "users" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"clerkId" varchar(256) NOT NULL,
+	"email" varchar(80) NOT NULL,
+	"firstname" varchar(80),
+	"lastname" varchar(80),
+	"dateCreated" timestamp DEFAULT now() NOT NULL,
+	"dateModified" timestamp DEFAULT now() NOT NULL,
+	"isDeleted" varchar(1) DEFAULT 'N' NOT NULL,
+	CONSTRAINT "users_clerkId_unique" UNIQUE("clerkId"),
+	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
 CREATE TABLE "usersorgs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"userId" uuid NOT NULL,
+	"userId" uuid,
 	"orgId" uuid NOT NULL,
 	"isActive" varchar(1) DEFAULT 'Y' NOT NULL,
 	"role" varchar(80) NOT NULL,
 	"lastAccessed" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "organizations" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-DROP TABLE "organizations" CASCADE;--> statement-breakpoint
-ALTER TABLE "users" DROP CONSTRAINT "users_clerk_user_id_unique";--> statement-breakpoint
-ALTER TABLE "users" DROP CONSTRAINT "users_primary_organization_id_organizations_id_fk";
---> statement-breakpoint
-ALTER TABLE "users" ALTER COLUMN "email" SET DATA TYPE varchar(80);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "clerkId" varchar(256) NOT NULL;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "firstname" varchar(80);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "lastname" varchar(80);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "dateCreated" timestamp DEFAULT now() NOT NULL;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "dateModified" timestamp DEFAULT now() NOT NULL;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "isDeleted" varchar(1) DEFAULT 'N' NOT NULL;--> statement-breakpoint
-ALTER TABLE "users" DROP COLUMN "clerk_user_id";--> statement-breakpoint
-ALTER TABLE "users" DROP COLUMN "first_name";--> statement-breakpoint
-ALTER TABLE "users" DROP COLUMN "last_name";--> statement-breakpoint
-ALTER TABLE "users" DROP COLUMN "primary_organization_id";--> statement-breakpoint
-ALTER TABLE "users" DROP COLUMN "created_at";--> statement-breakpoint
-ALTER TABLE "users" DROP COLUMN "updated_at";--> statement-breakpoint
-ALTER TABLE "users" ADD CONSTRAINT "users_clerkId_unique" UNIQUE("clerkId");
+ALTER TABLE "usersorgs" ADD CONSTRAINT "usersorgs_userId_users_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

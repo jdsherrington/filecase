@@ -1,6 +1,6 @@
 // web/src/routes/_authenticated.tsx
 
-import { Outlet, createRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createRoute, redirect, createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import { AppLayout } from "../components/AppLayout";
 import { Route as rootRoute } from "./__root"; // Import the root route
@@ -11,7 +11,7 @@ function AuthenticatedLayout() {
 }
 
 // This creates the layout route.
-export const Route = createRoute({
+export const Route = createFileRoute("/_authenticated")({
   // It's a child of the root route.
   getParentRoute: () => rootRoute,
   // This is a "pathless" layout route, so we give it a unique ID.

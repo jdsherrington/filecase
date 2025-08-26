@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm"
 
 export const usersorgs = pgTable("usersorgs", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
-	userId: uuid().notNull(),
+	  userId: uuid("userId").references(() => users.id),
 	orgId: uuid().notNull(),
 	isActive: varchar({ length: 1 }).default('Y').notNull(),
 	role: varchar({ length: 80 }).notNull(),
@@ -58,8 +58,8 @@ export const orgs = pgTable("orgs", {
 	dateModified: timestamp({ mode: 'string' }).defaultNow().notNull(),
 	accentColor: varchar({ length: 10 }),
 	avatarStorageId: varchar({ length: 256 }),
-	filesStatus: varchar({ length: 80 }).array().default(["RAY['Draft'::text", "'Final'::tex"]),
-	libraryStatus: varchar({ length: 80 }).array().default(["RAY['Draft'::text", "'Published'::tex"]),
+	filesStatus: varchar({ length: 80 }).array().default(['Draft', 'Final']),
+	libraryStatus: varchar({ length: 80 }).array().default(['Draft', 'Published']),
 	isDeleted: varchar({ length: 1 }).default('N').notNull(),
 });
 

@@ -1,11 +1,11 @@
 {
-  "id": "803d17ac-0c9c-482e-b016-b6adac949413",
+  "id": "b9bad73f-4e08-4d95-bdc0-b1559ae8b737",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.organizations": {
-      "name": "organizations",
+    "public.contacts": {
+      "name": "contacts",
       "schema": "",
       "columns": {
         "id": {
@@ -17,43 +17,292 @@
         },
         "name": {
           "name": "name",
-          "type": "varchar(256)",
+          "type": "varchar(80)",
           "primaryKey": false,
           "notNull": true
         },
-        "clerk_organization_id": {
-          "name": "clerk_organization_id",
-          "type": "varchar(256)",
+        "email": {
+          "name": "email",
+          "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "phone": {
+          "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "company": {
+          "name": "company",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dateCreated": {
+          "name": "dateCreated",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "dateModified": {
+          "name": "dateModified",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "orgId": {
+          "name": "orgId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "organizations_clerk_organization_id_unique": {
-          "name": "organizations_clerk_organization_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "clerk_organization_id"
-          ]
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.files": {
+      "name": "files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filetype": {
+          "name": "filetype",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filesize": {
+          "name": "filesize",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tags": {
+          "name": "tags",
+          "type": "varchar(80)[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "orgId": {
+          "name": "orgId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storageId": {
+          "name": "storageId",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dateCreated": {
+          "name": "dateCreated",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "dateModified": {
+          "name": "dateModified",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contactId": {
+          "name": "contactId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isDeleted": {
+          "name": "isDeleted",
+          "type": "varchar(1)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'N'"
         }
       },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.library": {
+      "name": "library",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "orgId": {
+          "name": "orgId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dateCreated": {
+          "name": "dateCreated",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "dateModified": {
+          "name": "dateModified",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "isDeleted": {
+          "name": "isDeleted",
+          "type": "varchar(1)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'N'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.orgs": {
+      "name": "orgs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dateCreated": {
+          "name": "dateCreated",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "dateModified": {
+          "name": "dateModified",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "accentColor": {
+          "name": "accentColor",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatarStorageId": {
+          "name": "avatarStorageId",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "filesStatus": {
+          "name": "filesStatus",
+          "type": "varchar(80)[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{\"Draft\",\"Final\"}'"
+        },
+        "libraryStatus": {
+          "name": "libraryStatus",
+          "type": "varchar(80)[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{\"Draft\",\"Published\"}'"
+        },
+        "isDeleted": {
+          "name": "isDeleted",
+          "type": "varchar(1)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'N'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -69,74 +318,61 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "clerk_user_id": {
-          "name": "clerk_user_id",
+        "clerkId": {
+          "name": "clerkId",
           "type": "varchar(256)",
           "primaryKey": false,
           "notNull": true
         },
         "email": {
           "name": "email",
-          "type": "varchar(256)",
+          "type": "varchar(80)",
           "primaryKey": false,
           "notNull": true
         },
-        "first_name": {
-          "name": "first_name",
-          "type": "varchar(256)",
+        "firstname": {
+          "name": "firstname",
+          "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false
         },
-        "last_name": {
-          "name": "last_name",
-          "type": "varchar(256)",
+        "lastname": {
+          "name": "lastname",
+          "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false
         },
-        "primary_organization_id": {
-          "name": "primary_organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
+        "dateCreated": {
+          "name": "dateCreated",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
-        "updated_at": {
-          "name": "updated_at",
+        "dateModified": {
+          "name": "dateModified",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "isDeleted": {
+          "name": "isDeleted",
+          "type": "varchar(1)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'N'"
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "users_primary_organization_id_organizations_id_fk": {
-          "name": "users_primary_organization_id_organizations_id_fk",
-          "tableFrom": "users",
-          "tableTo": "organizations",
-          "columnsFrom": [
-            "primary_organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_clerk_user_id_unique": {
-          "name": "users_clerk_user_id_unique",
+        "users_clerkId_unique": {
+          "name": "users_clerkId_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "clerk_user_id"
+            "clerkId"
           ]
         },
         "users_email_unique": {
@@ -147,6 +383,72 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.usersorgs": {
+      "name": "usersorgs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "orgId": {
+          "name": "orgId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "varchar(1)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Y'"
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lastAccessed": {
+          "name": "lastAccessed",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "usersorgs_userId_users_id_fk": {
+          "name": "usersorgs_userId_users_id_fk",
+          "tableFrom": "usersorgs",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

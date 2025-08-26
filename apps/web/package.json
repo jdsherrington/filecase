@@ -4,12 +4,15 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
-    "build": "vinxi build",
-    "start": "vinxi start"
+    "dev": "vite --port 3000",
+    "build": "vite build",
+    "start": "vite preview"
   },
   "dependencies": {
-    "@clerk/tanstack-react-start": "^0.16.0",
+    "@tanstack/react-query": "latest",
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-router-devtools": "latest",
+    "@clerk/tanstack-react-start": "^0.18.0",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-collapsible": "^1.1.11",
@@ -20,10 +23,6 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.7",
-    "@tanstack/react-query": "5.85.5",
-    "@tanstack/react-router": "^1.120.15",
-    "@tanstack/react-router-devtools": "^1.120.15",
-    "@tanstack/react-start": "^1.120.15",
     "@types/js-cookie": "^3.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -36,7 +35,6 @@
     "react-hook-form": "^7.62.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "vinxi": "0.5.3",
     "zod": "^4.1.1"
   },
   "devDependencies": {
@@ -47,6 +45,9 @@
     "postcss": "^8.5.1",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.7.2",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vite": "latest",
+    "@vitejs/plugin-react": "latest",
+    "@tanstack/router-plugin": "latest"
   }
 }
