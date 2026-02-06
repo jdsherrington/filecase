@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as InternalRouteImport } from './routes/internal'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as ContactsRouteImport } from './routes/contacts'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +28,11 @@ import { Route as AdminUsersUserIdAssignmentsRouteImport } from './routes/admin/
 import { Route as ClientsClientIdEngagementsEngagementIdDocumentsIndexRouteImport } from './routes/clients/$clientId/engagements/$engagementId/documents/index'
 import { Route as ClientsClientIdEngagementsEngagementIdDocumentsNewRouteImport } from './routes/clients/$clientId/engagements/$engagementId/documents/new'
 
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LogoutRoute = LogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
@@ -35,9 +43,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InternalRoute = InternalRouteImport.update({
+  id: '/internal',
+  path: '/internal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthRoute = HealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -111,9 +129,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
   '/clients': typeof ClientsRouteWithChildren
+  '/contacts': typeof ContactsRoute
   '/health': typeof HealthRoute
+  '/internal': typeof InternalRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/templates': typeof TemplatesRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/documents/': typeof DocumentsIndexRoute
@@ -128,9 +149,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
   '/clients': typeof ClientsRouteWithChildren
+  '/contacts': typeof ContactsRoute
   '/health': typeof HealthRoute
+  '/internal': typeof InternalRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/templates': typeof TemplatesRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/documents': typeof DocumentsIndexRoute
@@ -146,9 +170,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/audit': typeof AuditRoute
   '/clients': typeof ClientsRouteWithChildren
+  '/contacts': typeof ContactsRoute
   '/health': typeof HealthRoute
+  '/internal': typeof InternalRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/templates': typeof TemplatesRoute
   '/admin/users': typeof AdminUsersRouteWithChildren
   '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/documents/': typeof DocumentsIndexRoute
@@ -165,9 +192,12 @@ export interface FileRouteTypes {
     | '/'
     | '/audit'
     | '/clients'
+    | '/contacts'
     | '/health'
+    | '/internal'
     | '/login'
     | '/logout'
+    | '/templates'
     | '/admin/users'
     | '/documents/$documentId'
     | '/documents/'
@@ -182,9 +212,12 @@ export interface FileRouteTypes {
     | '/'
     | '/audit'
     | '/clients'
+    | '/contacts'
     | '/health'
+    | '/internal'
     | '/login'
     | '/logout'
+    | '/templates'
     | '/admin/users'
     | '/documents/$documentId'
     | '/documents'
@@ -199,9 +232,12 @@ export interface FileRouteTypes {
     | '/'
     | '/audit'
     | '/clients'
+    | '/contacts'
     | '/health'
+    | '/internal'
     | '/login'
     | '/logout'
+    | '/templates'
     | '/admin/users'
     | '/documents/$documentId'
     | '/documents/'
@@ -217,9 +253,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditRoute: typeof AuditRoute
   ClientsRoute: typeof ClientsRouteWithChildren
+  ContactsRoute: typeof ContactsRoute
   HealthRoute: typeof HealthRoute
+  InternalRoute: typeof InternalRoute
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
+  TemplatesRoute: typeof TemplatesRoute
   AdminUsersRoute: typeof AdminUsersRouteWithChildren
   DocumentsDocumentIdRoute: typeof DocumentsDocumentIdRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
@@ -227,6 +266,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/logout': {
       id: '/logout'
       path: '/logout'
@@ -241,11 +287,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/internal': {
+      id: '/internal'
+      path: '/internal'
+      fullPath: '/internal'
+      preLoaderRoute: typeof InternalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health': {
       id: '/health'
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -397,9 +457,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditRoute: AuditRoute,
   ClientsRoute: ClientsRouteWithChildren,
+  ContactsRoute: ContactsRoute,
   HealthRoute: HealthRoute,
+  InternalRoute: InternalRoute,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  TemplatesRoute: TemplatesRoute,
   AdminUsersRoute: AdminUsersRouteWithChildren,
   DocumentsDocumentIdRoute: DocumentsDocumentIdRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,

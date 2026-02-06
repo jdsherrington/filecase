@@ -1,34 +1,34 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @source "./**/*.{ts,tsx}";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --fc-canvas: oklch(0.985 0.008 95);
-  --fc-canvas-glow: oklch(0.96 0.03 90 / 40%);
-  --fc-sidebar-bg: oklch(0.22 0.03 238);
-  --fc-sidebar-border: oklch(0.3 0.03 235);
-  --fc-sidebar-hover-bg: oklch(0.32 0.03 235 / 45%);
+  --fc-canvas: oklch(0.98 0.008 95);
+  --fc-canvas-accent: oklch(0.92 0.03 80 / 55%);
+  --fc-sidebar-bg: oklch(0.24 0.03 245);
+  --fc-sidebar-border: oklch(0.34 0.03 245);
+  --fc-sidebar-hover-bg: oklch(0.34 0.03 245 / 52%);
   --fc-sidebar-active-bg: oklch(0.92 0.03 88);
-  --fc-sidebar-active-text: oklch(0.24 0.03 238);
-  --fc-profile-bg: oklch(0.27 0.03 235);
-  --fc-profile-border: oklch(0.38 0.03 235);
-  --fc-content-bg: oklch(0.99 0.006 95);
+  --fc-sidebar-active-text: oklch(0.24 0.03 245);
+  --fc-profile-bg: oklch(0.29 0.03 245);
+  --fc-profile-border: oklch(0.39 0.03 245);
   --fc-content-border: oklch(0.88 0.02 90);
-  --fc-surface: oklch(1 0 0 / 72%);
+  --fc-surface: oklch(1 0 0 / 78%);
   --fc-font-display: "Fraunces", ui-serif, Georgia, serif;
-  --fc-font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --fc-font-sans: "Manrope", "Segoe UI", sans-serif;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   background: radial-gradient(
-      circle at 15% 10%,
-      var(--fc-canvas-glow),
-      transparent 36%
-    ), linear-gradient(180deg, oklch(0.98 0.007 95), var(--fc-canvas));
+      circle at 10% 10%,
+      var(--fc-canvas-accent),
+      transparent 33%
+    ),
+    linear-gradient(180deg, oklch(0.99 0.005 95), var(--fc-canvas));
   color: var(--foreground);
   font-family: var(--fc-font-sans);
 }
@@ -58,8 +58,8 @@ body {
 }
 
 .fc-mobile-nav {
-  border-bottom: 1px solid var(--fc-content-border);
-  background: var(--fc-content-bg);
+  background: oklch(1 0 0 / 92%);
+  backdrop-filter: blur(8px);
 }
 
 @media (min-width: 1024px) {

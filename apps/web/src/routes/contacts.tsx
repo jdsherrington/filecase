@@ -1,20 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { AppShell } from "../components/app-shell";
-import { RecordsArea } from "../components/records-area";
+import { ContactsArea } from "../components/contacts-area";
 import { getCurrentUserServerFn } from "../server/auth/server-fns";
 
-type RecordsSearch = {
-  contactId?: string;
-};
-
-export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>): RecordsSearch => ({
-    contactId:
-      typeof search.contactId === "string" && search.contactId.length > 0
-        ? search.contactId
-        : undefined,
-  }),
+export const Route = createFileRoute("/contacts")({
   beforeLoad: async () => {
     const user = await getCurrentUserServerFn();
 
@@ -35,16 +25,15 @@ export const Route = createFileRoute("/")({
 
     return user;
   },
-  component: RecordsRoutePage,
+  component: ContactsRoutePage,
 });
 
-function RecordsRoutePage() {
+function ContactsRoutePage() {
   const user = Route.useLoaderData();
-  const search = Route.useSearch();
 
   return (
     <AppShell user={user}>
-      <RecordsArea mode="records" presetClientId={search.contactId} />
+      <ContactsArea />
     </AppShell>
   );
 }
