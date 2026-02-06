@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: filecase
+          POSTGRES_USER: filecase
+          POSTGRES_PASSWORD: filecase
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U filecase -d filecase"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://filecase:filecase@localhost:5432/filecase
+      SESSION_COOKIE_NAME: filecase_session
+      SESSION_SECRET: this-is-a-long-ci-session-secret-value-123456
+      APP_ORIGIN: http://localhost:3000
+      R2_ACCOUNT_ID: ci-account
+      R2_ACCESS_KEY_ID: ci-access-key
+      R2_SECRET_ACCESS_KEY: ci-secret-key
+      R2_BUCKET_NAME: ci-bucket
+      FILE_DOWNLOAD_TTL_SECONDS: 300
+      MAX_UPLOAD_BYTES: 52428800
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Apply migrations
+        run: bun run db:migrate
+
+      - name: Seed database
+        run: bun run db:seed
+
+      - name: Test
+        run: bun run test

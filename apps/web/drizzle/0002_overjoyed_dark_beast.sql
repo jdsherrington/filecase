@@ -1,0 +1,2 @@
+ALTER TABLE "documents" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;--> statement-breakpoint
+CREATE INDEX "documents_updated_at_idx" ON "documents" USING btree ("updated_at");

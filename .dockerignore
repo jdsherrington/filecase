@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+**/node_modules
+apps/web/.tanstack
+apps/web/dist
+*.log
+.env
+.env.local
+.env.production
