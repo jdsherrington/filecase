@@ -30,6 +30,7 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
+import { AppShell } from "../components/app-shell";
 import {
   exportAuditCsvServerFn,
   listAuditEventsServerFn,
@@ -55,6 +56,19 @@ export const Route = createFileRoute("/audit")({
     if (user.role !== "admin" && user.role !== "manager") {
       throw redirect({ to: "/" });
     }
+  },
+  loader: async () => {
+    const user = await getCurrentUserServerFn();
+
+    if (!user) {
+      throw redirect({ to: "/login" });
+    }
+
+    if (user.role !== "admin" && user.role !== "manager") {
+      throw redirect({ to: "/" });
+    }
+
+    return user;
   },
   component: AuditPage,
 });
@@ -86,6 +100,7 @@ function downloadTextFile(fileName: string, contents: string) {
 }
 
 function AuditPage() {
+  const user = Route.useLoaderData();
   const queryClient = useQueryClient();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -244,87 +259,146 @@ function AuditPage() {
   });
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-6 py-12">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Audit Log</h1>
-        <div className="flex items-center gap-2">
-          <Link className={buttonVariants({ variant: "outline" })} to="/">
-            Back to Dashboard
-          </Link>
-          <Button
-            disabled={exportMutation.isPending}
-            type="button"
-            onClick={() => exportMutation.mutate()}
-          >
-            Export CSV
-          </Button>
-        </div>
-      </header>
-
-      <section className="grid gap-3 rounded-lg border p-4 md:grid-cols-4">
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(event) => {
-            setOffset(0);
-            setStartDate(event.target.value);
-          }}
-        />
-        <Input
-          type="date"
-          value={endDate}
-          onChange={(event) => {
-            setOffset(0);
-            setEndDate(event.target.value);
-          }}
-        />
-        <Input
-          placeholder="Action"
-          value={action}
-          onChange={(event) => {
-            setOffset(0);
-            setAction(event.target.value);
-          }}
-        />
-        <Input
-          placeholder="Entity type"
-          value={entityType}
-          onChange={(event) => {
-            setOffset(0);
-            setEntityType(event.target.value);
-          }}
-        />
-        <select
-          className="h-10 rounded-md border bg-background px-3 text-sm"
-          value={userId}
-          onChange={(event) => {
-            setOffset(0);
-            setUserId(event.target.value);
-          }}
+    <AppShell
+      actions={
+        <Button
+          disabled={exportMutation.isPending}
+          type="button"
+          onClick={() => exportMutation.mutate()}
         >
-          <option value="">All users</option>
-          {(usersQuery.data ?? []).map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.name} ({user.email})
-            </option>
-          ))}
-        </select>
-        <Input
-          placeholder="Client ID"
-          value={clientId}
-          onChange={(event) => {
-            setOffset(0);
-            setClientId(event.target.value);
-          }}
-        />
-        <Input
-          placeholder="Engagement ID"
-          value={engagementId}
-          onChange={(event) => {
-            setOffset(0);
-            setEngagementId(event.target.value);
-          }}
-        />
+          Export CSV
+        </Button>
+      }
+      description="Review system activity and export filtered audit data."
+      title="Audit Log"
+      user={user}
+    >
+      <section className="grid gap-3 rounded-lg border p-4 md:grid-cols-4">
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-start-date"
+        >
+          Date From
+          <Input
+            autoComplete="off"
+            id="audit-start-date"
+            name="startDate"
+            type="date"
+            value={startDate}
+            onChange={(event) => {
+              setOffset(0);
+              setStartDate(event.target.value);
+            }}
+          />
+        </label>
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-end-date"
+        >
+          Date To
+          <Input
+            autoComplete="off"
+            id="audit-end-date"
+            name="endDate"
+            type="date"
+            value={endDate}
+            onChange={(event) => {
+              setOffset(0);
+              setEndDate(event.target.value);
+            }}
+          />
+        </label>
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-action"
+        >
+          Action
+          <Input
+            autoComplete="off"
+            id="audit-action"
+            name="action"
+            placeholder="Action…"
+            value={action}
+            onChange={(event) => {
+              setOffset(0);
+              setAction(event.target.value);
+            }}
+          />
+        </label>
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-entity-type"
+        >
+          Entity Type
+          <Input
+            autoComplete="off"
+            id="audit-entity-type"
+            name="entityType"
+            placeholder="Entity type…"
+            value={entityType}
+            onChange={(event) => {
+              setOffset(0);
+              setEntityType(event.target.value);
+            }}
+          />
+        </label>
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-user-id"
+        >
+          User
+          <select
+            className="h-10 rounded-md border bg-background px-3 text-sm"
+            id="audit-user-id"
+            name="userId"
+            value={userId}
+            onChange={(event) => {
+              setOffset(0);
+              setUserId(event.target.value);
+            }}
+          >
+            <option value="">All users</option>
+            {(usersQuery.data ?? []).map((userOption) => (
+              <option key={userOption.id} value={userOption.id}>
+                {userOption.name} ({userOption.email})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-client-id"
+        >
+          Client ID
+          <Input
+            autoComplete="off"
+            id="audit-client-id"
+            name="clientId"
+            placeholder="Client ID…"
+            value={clientId}
+            onChange={(event) => {
+              setOffset(0);
+              setClientId(event.target.value);
+            }}
+          />
+        </label>
+        <label
+          className="space-y-1 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+          htmlFor="audit-engagement-id"
+        >
+          Engagement ID
+          <Input
+            autoComplete="off"
+            id="audit-engagement-id"
+            name="engagementId"
+            placeholder="Engagement ID…"
+            value={engagementId}
+            onChange={(event) => {
+              setOffset(0);
+              setEngagementId(event.target.value);
+            }}
+          />
+        </label>
       </section>
 
       {exportMutation.data?.truncated ? (
@@ -399,6 +473,6 @@ function AuditPage() {
           </Button>
         </div>
       </footer>
-    </main>
+    </AppShell>
   );
 }
