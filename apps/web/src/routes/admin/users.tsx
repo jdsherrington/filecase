@@ -16,6 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { AppShell } from "../../components/app-shell";
 import { listUsersServerFn } from "../../server/admin/assignment-fns";
 import { getCurrentUserServerFn } from "../../server/auth/server-fns";
 
@@ -60,12 +61,24 @@ export const Route = createFileRoute("/admin/users")({
     }
   },
   loader: async ({ context }) => {
+    const user = await getCurrentUserServerFn();
+
+    if (!user) {
+      throw redirect({ to: "/login" });
+    }
+
+    if (user.role !== "admin" && user.role !== "manager") {
+      throw redirect({ to: "/" });
+    }
+
     await context.queryClient.ensureQueryData(usersQueryOptions);
+    return user;
   },
   component: AdminUsersPage,
 });
 
 function AdminUsersPage() {
+  const user = Route.useLoaderData();
   const usersQuery = useQuery(usersQueryOptions);
   const rows = usersQuery.data ?? [];
 
@@ -76,56 +89,55 @@ function AdminUsersPage() {
   });
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-12">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Users</h1>
-        <Link className={buttonVariants({ variant: "outline" })} to="/">
-          Back to Dashboard
-        </Link>
-      </header>
-
-      <section className="rounded-lg border p-4">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length}>
-                  No users found in this firm.
-                </TableCell>
-              </TableRow>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
+    <AppShell
+      description="Manage staff access by opening each user's assignment matrix."
+      title="Team Assignments"
+      user={user}
+    >
+      <section className="overflow-hidden rounded-2xl border border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)]">
+        <div className="overflow-auto">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length}>
+                    No users found in this firm.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </section>
-    </main>
+    </AppShell>
   );
 }
