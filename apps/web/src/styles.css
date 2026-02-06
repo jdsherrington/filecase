@@ -27,8 +27,7 @@ body {
       circle at 10% 10%,
       var(--fc-canvas-accent),
       transparent 33%
-    ),
-    linear-gradient(180deg, oklch(0.99 0.005 95), var(--fc-canvas));
+    ), linear-gradient(180deg, oklch(0.99 0.005 95), var(--fc-canvas));
   color: var(--foreground);
   font-family: var(--fc-font-sans);
 }
@@ -44,17 +43,29 @@ body {
 }
 
 .fc-sidebar {
+  --fc-sidebar-width: 17.5rem;
   position: sticky;
   top: 0;
   display: none;
   height: 100vh;
-  width: 17.5rem;
+  width: var(--fc-sidebar-width);
+  min-width: var(--fc-sidebar-width);
+  max-width: var(--fc-sidebar-width);
+  flex-basis: var(--fc-sidebar-width);
   flex-shrink: 0;
   flex-direction: column;
   border-right: 1px solid var(--fc-sidebar-border);
   background: var(--fc-sidebar-bg);
   color: oklch(0.93 0.01 250);
   padding: 1.5rem 1rem;
+  overflow-x: clip;
+  transition: width 0.18s ease, padding 0.18s ease;
+}
+
+.fc-sidebar-collapsed {
+  --fc-sidebar-width: 4.75rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
 }
 
 .fc-mobile-nav {
