@@ -1,205 +1,66 @@
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  buttonVariants,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   cn,
 } from "@filecase/ui";
 import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Building,
+  Contact2,
+  FileStack,
+  FileText,
+  PanelLeft,
+  PanelLeftClose,
+  Settings,
+  UserRound,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { AuthenticatedUser } from "../server/auth/session";
 
 type AppShellProps = {
   user: AuthenticatedUser;
+  firmOptions?: FirmOption[];
+  title?: string;
+  description?: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 };
 
 type NavItem = {
   label: string;
   to: "/" | "/templates" | "/internal" | "/contacts";
-  icon: (props: { className?: string }) => React.JSX.Element;
+  icon: LucideIcon;
+};
+
+type FirmOption = {
+  id: string;
+  name: string;
 };
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "filecase.sidebar.collapsed";
 
-function FilecaseLogoMark({
-  className,
-}: {
-  className?: string;
-}): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 36 36"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect
-        fill="var(--fc-sidebar-active-bg)"
-        height="34"
-        rx="10"
-        width="34"
-        x="1"
-        y="1"
-      />
-      <path
-        d="M9 12.25H27M9 18H22M9 23.75H17"
-        stroke="var(--fc-sidebar-active-text)"
-        strokeLinecap="round"
-        strokeWidth="2.3"
-      />
-    </svg>
-  );
-}
-
-function RecordsIcon({ className }: { className?: string }): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M6 7.5H18M6 12H18M6 16.5H13.5M4.75 4.75H19.25V19.25H4.75V4.75Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function TemplatesIcon({
-  className,
-}: {
-  className?: string;
-}): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M7.5 4.75H19.25V16.5H7.5V4.75ZM4.75 7.5H16.5V19.25H4.75V7.5Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function InternalIcon({
-  className,
-}: {
-  className?: string;
-}): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M12 3.75L19.25 8V16L12 20.25L4.75 16V8L12 3.75ZM12 9V15M9 12H15"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function ContactsIcon({
-  className,
-}: {
-  className?: string;
-}): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M12 12.5C13.933 12.5 15.5 10.933 15.5 9C15.5 7.067 13.933 5.5 12 5.5C10.067 5.5 8.5 7.067 8.5 9C8.5 10.933 10.067 12.5 12 12.5ZM6 18.25C6.85 15.95 9.15 14.5 12 14.5C14.85 14.5 17.15 15.95 18 18.25"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function ProfileIcon({ className }: { className?: string }): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M12 12.25C13.933 12.25 15.5 10.683 15.5 8.75C15.5 6.817 13.933 5.25 12 5.25C10.067 5.25 8.5 6.817 8.5 8.75C8.5 10.683 10.067 12.25 12 12.25ZM6.25 18.75C7.117 16.45 9.267 15 12 15C14.733 15 16.883 16.45 17.75 18.75"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function CollapseIcon({
-  className,
-  collapsed,
-}: {
-  className?: string;
-  collapsed: boolean;
-}): React.JSX.Element {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d={collapsed ? "M9 6L15 12L9 18" : "M15 6L9 12L15 18"}
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.9"
-      />
-    </svg>
-  );
-}
-
 const navItems: NavItem[] = [
-  { label: "Records", to: "/", icon: RecordsIcon },
-  { label: "Templates", to: "/templates", icon: TemplatesIcon },
-  { label: "Internal", to: "/internal", icon: InternalIcon },
-  { label: "Contacts", to: "/contacts", icon: ContactsIcon },
+  { label: "Records", to: "/", icon: FileText },
+  { label: "Templates", to: "/templates", icon: FileStack },
+  { label: "Internal", to: "/internal", icon: Building },
+  { label: "Contacts", to: "/contacts", icon: Contact2 },
 ];
 
 function isCurrentPath(pathname: string, route: string): boolean {
@@ -210,24 +71,94 @@ function isCurrentPath(pathname: string, route: string): boolean {
   return pathname === route || pathname.startsWith(`${route}/`);
 }
 
-function roleLabel(role: AuthenticatedUser["role"]): string {
-  if (role === "admin") {
-    return "Administrator";
-  }
-
-  if (role === "manager") {
-    return "Manager";
-  }
-
-  return "Staff";
+function LogoMark({ className }: { className?: string }): React.JSX.Element {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M5.25 9.5L12 5.75L18.75 9.5L12 13.25L5.25 9.5Z"
+        fill="currentColor"
+        opacity="0.22"
+      />
+      <path
+        d="M5.25 9.5V16.25L12 20L18.75 16.25V9.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M8.5 11.5V15.25L12 17.25L15.5 15.25V11.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M10.5 12L12 12.85L13.5 12"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
 }
 
-export function AppShell({ user, children }: AppShellProps) {
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  const initials = parts.map((part) => part.slice(0, 1).toUpperCase()).join("");
+  return initials || "FC";
+}
+
+function AccountMenuItems({ user }: { user: AuthenticatedUser }) {
+  return (
+    <>
+      <DropdownMenuLabel>
+        <p className="text-sm font-semibold">{user.name}</p>
+        <p className="text-xs font-normal text-muted-foreground">
+          {user.email}
+        </p>
+      </DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem asChild>
+        <Link to="/internal">Account Settings</Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link to="/logout">Sign out</Link>
+      </DropdownMenuItem>
+    </>
+  );
+}
+
+export function AppShell({
+  user,
+  firmOptions,
+  title,
+  description,
+  actions,
+  children,
+}: AppShellProps) {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") {
+      return false;
+    }
+
+    const fromDocument = document.documentElement.dataset.fcSidebarCollapsed;
+    if (fromDocument === "true") {
+      return true;
+    }
+
+    if (fromDocument === "false") {
       return false;
     }
 
@@ -240,16 +171,36 @@ export function AppShell({ user, children }: AppShellProps) {
     }
   });
 
+  const [selectedFirmId, setSelectedFirmId] = useState(user.firmId);
+
   useEffect(() => {
     try {
       window.localStorage.setItem(
         SIDEBAR_COLLAPSED_STORAGE_KEY,
         String(isSidebarCollapsed),
       );
+      document.documentElement.dataset.fcSidebarCollapsed = isSidebarCollapsed
+        ? "true"
+        : "false";
     } catch {
       // Ignore storage errors and keep UI functional.
     }
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    setSelectedFirmId(user.firmId);
+  }, [user.firmId]);
+
+  const availableFirmOptions =
+    firmOptions && firmOptions.length > 0
+      ? firmOptions
+      : [
+          {
+            id: user.firmId,
+            name: user.firmName,
+          },
+        ];
+  const hasMultipleFirms = availableFirmOptions.length > 1;
 
   return (
     <div className="fc-app-shell">
@@ -261,59 +212,58 @@ export function AppShell({ user, children }: AppShellProps) {
       >
         <div
           className={cn(
-            "flex min-h-14 items-center gap-3",
-            isSidebarCollapsed ? "justify-center" : "",
+            "fc-sidebar-top",
+            isSidebarCollapsed && "justify-center",
           )}
         >
-          <Link
-            aria-label="Go to records"
-            className={cn(
-              "group flex items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              isSidebarCollapsed
-                ? "h-11 w-11 justify-center"
-                : "min-w-0 justify-start",
-            )}
-            to="/"
-          >
-            <FilecaseLogoMark className="h-9 w-9 flex-none" />
-            {!isSidebarCollapsed ? (
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          {isSidebarCollapsed ? (
+            <button
+              aria-label="Expand sidebar"
+              className="fc-collapse-button"
+              onClick={() => setIsSidebarCollapsed(false)}
+              type="button"
+            >
+              <PanelLeft className="size-4" />
+            </button>
+          ) : (
+            <>
+              <Link aria-label="Go to records" className="fc-brand-link" to="/">
+                <LogoMark className="size-8 shrink-0" />
+                <span className="truncate text-lg font-semibold tracking-tight text-foreground">
                   Filecase
-                </p>
-                <h1 className="fc-display truncate text-xl text-foreground">
-                  {user.firmName}
-                </h1>
-              </div>
-            ) : (
-              <span className="sr-only">Filecase</span>
-            )}
-          </Link>
+                </span>
+              </Link>
+              <button
+                aria-label="Collapse sidebar"
+                className="fc-collapse-button"
+                onClick={() => setIsSidebarCollapsed(true)}
+                type="button"
+              >
+                <PanelLeftClose className="size-4" />
+              </button>
+            </>
+          )}
         </div>
 
-        <nav aria-label="Primary" className="mt-8 grid gap-2">
+        <nav aria-label="Primary" className="fc-sidebar-nav">
           {navItems.map((item) => {
             const active = isCurrentPath(pathname, item.to);
+            const Icon = item.icon;
+
             return (
               <Link
                 aria-label={isSidebarCollapsed ? item.label : undefined}
                 className={cn(
-                  "flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isSidebarCollapsed ? "justify-center px-0" : "justify-start",
-                  active
-                    ? "bg-[color:var(--fc-sidebar-active-bg)] text-[color:var(--fc-sidebar-active-text)]"
-                    : "text-muted-foreground hover:bg-[color:var(--fc-sidebar-hover-bg)] hover:text-foreground",
+                  "fc-nav-item",
+                  isSidebarCollapsed && "fc-nav-item-collapsed",
+                  active && "fc-nav-item-active",
                 )}
                 key={item.to}
                 {...(active ? { "aria-current": "page" as const } : {})}
                 to={item.to}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {!isSidebarCollapsed ? (
-                  <span>{item.label}</span>
-                ) : (
-                  <span className="sr-only">{item.label}</span>
-                )}
+                <Icon className="size-[1.125rem] shrink-0" />
+                {!isSidebarCollapsed ? <span>{item.label}</span> : null}
               </Link>
             );
           })}
@@ -321,101 +271,158 @@ export function AppShell({ user, children }: AppShellProps) {
 
         <div
           className={cn(
-            "mt-auto flex flex-col gap-3",
-            isSidebarCollapsed ? "items-center" : "",
+            "fc-sidebar-bottom",
+            isSidebarCollapsed
+              ? "fc-sidebar-bottom-collapsed"
+              : "fc-sidebar-bottom-expanded",
           )}
         >
-          <button
-            aria-label={
-              isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
-            }
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--fc-profile-border)] bg-[color:var(--fc-profile-bg)] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={() => setIsSidebarCollapsed((value) => !value)}
-            type="button"
-          >
-            <CollapseIcon className="h-4 w-4" collapsed={isSidebarCollapsed} />
-          </button>
-
-          {isSidebarCollapsed ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  aria-label="Account menu"
-                  className={cn(
-                    "inline-flex h-11 w-11 items-center justify-center self-center rounded-xl border border-[color:var(--fc-profile-border)] bg-[color:var(--fc-profile-bg)] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  )}
-                  type="button"
-                >
-                  <ProfileIcon className="h-5 w-5" />
-                  <span className="sr-only">Account</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56" side="right">
-                <DropdownMenuLabel>
-                  <p className="text-sm font-semibold">{user.name}</p>
-                  <p className="text-xs font-normal text-muted-foreground">
-                    {user.email}
-                  </p>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/internal">Account</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/logout">Sign Out</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <div className="rounded-2xl border border-[color:var(--fc-profile-border)] bg-[color:var(--fc-profile-bg)] p-4">
-              <p className="text-sm font-semibold text-foreground">
-                {user.name}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">{user.email}</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {roleLabel(user.role)}
-              </p>
-              <Link
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                aria-label="Open settings"
                 className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "mt-4 w-full",
+                  "fc-sidebar-settings",
+                  isSidebarCollapsed && "fc-sidebar-settings-collapsed",
                 )}
-                to="/logout"
+                type="button"
               >
-                Sign Out
-              </Link>
-            </div>
-          )}
+                <Settings className="size-4 shrink-0" />
+                {!isSidebarCollapsed ? <span>Settings</span> : null}
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Settings</DialogTitle>
+                <DialogDescription>
+                  Open account and workspace settings.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Link className="fc-modal-link" to="/internal">
+                  Account Settings
+                </Link>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <div aria-hidden="true" className="fc-sidebar-separator" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label="Profile menu"
+                className={cn(
+                  "fc-profile-trigger",
+                  isSidebarCollapsed && "fc-profile-trigger-collapsed",
+                )}
+                type="button"
+              >
+                <span className="fc-profile-avatar" aria-hidden="true">
+                  {initialsFromName(user.name)}
+                </span>
+                {!isSidebarCollapsed ? (
+                  <span className="fc-profile-name" title={user.name}>
+                    {user.name}
+                  </span>
+                ) : null}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align={isSidebarCollapsed ? "start" : "end"}
+              className="w-56"
+              side={isSidebarCollapsed ? "right" : "top"}
+            >
+              <AccountMenuItems user={user} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {!isSidebarCollapsed ? (
+            hasMultipleFirms ? (
+              <Select value={selectedFirmId} onValueChange={setSelectedFirmId}>
+                <SelectTrigger
+                  aria-label="Tenant"
+                  className="fc-tenant-select-trigger"
+                  id="tenant-switcher"
+                >
+                  <SelectValue placeholder="Select tenant" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFirmOptions.map((firm) => (
+                    <SelectItem key={firm.id} value={firm.id}>
+                      {firm.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="fc-tenant-label">{availableFirmOptions[0]?.name}</p>
+            )
+          ) : null}
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <nav
-          aria-label="Mobile primary"
-          className="fc-mobile-nav border-b border-[color:var(--fc-content-border)] px-4 py-3 sm:px-6"
-        >
-          <div className="flex gap-2 overflow-x-auto pb-1">
+        <nav aria-label="Mobile primary" className="fc-mobile-nav">
+          <div className="flex items-center gap-2 overflow-x-auto">
             {navItems.map((item) => {
               const active = isCurrentPath(pathname, item.to);
+              const Icon = item.icon;
+
               return (
                 <Link
                   className={cn(
-                    "whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium whitespace-nowrap",
                     active
-                      ? "border-[color:var(--fc-sidebar-active-text)] bg-[color:var(--fc-sidebar-active-bg)] text-[color:var(--fc-sidebar-active-text)]"
+                      ? "border-foreground bg-foreground text-background"
                       : "border-border text-muted-foreground",
                   )}
                   key={`${item.to}-mobile`}
                   to={item.to}
                 >
+                  <Icon className="size-3.5" />
                   {item.label}
                 </Link>
               );
             })}
           </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label="Profile menu"
+                className="fc-mobile-profile"
+                type="button"
+              >
+                <UserRound className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <AccountMenuItems user={user} />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10" id="main-content">
+        <main className="flex-1 px-4 py-4 sm:px-6 lg:px-8" id="main-content">
+          {title || description || actions ? (
+            <header className="mb-6 border-b border-[color:var(--fc-content-border)] pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  {title ? (
+                    <h1 className="text-2xl font-semibold tracking-tight">
+                      {title}
+                    </h1>
+                  ) : null}
+                  {description ? (
+                    <p className="text-sm text-muted-foreground">
+                      {description}
+                    </p>
+                  ) : null}
+                </div>
+                {actions ? <div>{actions}</div> : null}
+              </div>
+            </header>
+          ) : null}
           <div className="mx-auto w-full">{children}</div>
         </main>
       </div>

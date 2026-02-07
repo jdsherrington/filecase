@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
+import sidebarPrefInitScript from "../scripts/sidebar-pref-init.js?url";
 import appCss from "../styles.css?url";
 
 type RouterContext = {
@@ -59,6 +60,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script src={sidebarPrefInitScript} />
         <HeadContent />
       </head>
       <body>

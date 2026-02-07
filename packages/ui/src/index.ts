@@ -31,6 +31,18 @@ export {
 } from "./components/dropdown-menu";
 export { Input } from "./components/input";
 export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "./components/select";
+export {
   Table,
   TableBody,
   TableCell,

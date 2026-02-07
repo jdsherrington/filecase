@@ -51,3 +51,106 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 }
+
+@keyframes fc-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fc-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fc-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fc-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes fc-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes fc-dialog-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -49%) scale(0.99);
+  }
+}
+
+.fc-dropdown-content[data-state="open"],
+.fc-select-content[data-state="open"] {
+  animation: fc-pop-in 160ms ease-out;
+}
+
+.fc-dropdown-content[data-state="closed"],
+.fc-select-content[data-state="closed"] {
+  animation: fc-pop-out 130ms ease-in;
+}
+
+.fc-dialog-overlay[data-state="open"] {
+  animation: fc-fade-in 160ms ease-out;
+}
+
+.fc-dialog-overlay[data-state="closed"] {
+  animation: fc-fade-out 120ms ease-in;
+}
+
+.fc-dialog-content[data-state="open"] {
+  animation: fc-dialog-in 180ms ease-out;
+}
+
+.fc-dialog-content[data-state="closed"] {
+  animation: fc-dialog-out 140ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-dropdown-content,
+  .fc-select-content,
+  .fc-dialog-overlay,
+  .fc-dialog-content {
+    animation: none !important;
+  }
+}

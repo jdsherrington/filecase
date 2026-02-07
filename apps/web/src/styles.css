@@ -1,53 +1,96 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @source "./**/*.{ts,tsx}";
 @source "../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
-  --fc-canvas: oklch(0.98 0.008 95);
-  --fc-canvas-accent: oklch(0.92 0.03 80 / 55%);
-  --fc-sidebar-bg: oklch(0.24 0.03 245);
-  --fc-sidebar-border: oklch(0.34 0.03 245);
-  --fc-sidebar-hover-bg: oklch(0.34 0.03 245 / 52%);
-  --fc-sidebar-active-bg: oklch(0.92 0.03 88);
-  --fc-sidebar-active-text: oklch(0.24 0.03 245);
-  --fc-profile-bg: oklch(0.29 0.03 245);
-  --fc-profile-border: oklch(0.39 0.03 245);
-  --fc-content-border: oklch(0.88 0.02 90);
-  --fc-surface: oklch(1 0 0 / 78%);
-  --fc-font-display: "Fraunces", ui-serif, Georgia, serif;
-  --fc-font-sans: "Manrope", "Segoe UI", sans-serif;
+  --background: oklch(0.987 0 0);
+  --foreground: oklch(0.165 0 0);
+  --primary: oklch(0.18 0 0);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0 0);
+  --secondary-foreground: oklch(0.22 0 0);
+  --muted: oklch(0.955 0 0);
+  --muted-foreground: oklch(0.46 0 0);
+  --accent: oklch(0.95 0 0);
+  --accent-foreground: oklch(0.18 0 0);
+  --popover: oklch(0.995 0 0);
+  --popover-foreground: oklch(0.165 0 0);
+  --ring: oklch(0.55 0 0);
+
+  --fc-canvas: oklch(0.95 0 0);
+  --fc-shell-bg: oklch(0.98 0 0);
+  --fc-sidebar-bg: oklch(0.965 0 0);
+  --fc-sidebar-border: oklch(0.89 0 0);
+  --fc-sidebar-hover-bg: oklch(0.93 0 0);
+  --fc-sidebar-active-bg: oklch(0.9 0 0);
+  --fc-sidebar-active-text: oklch(0.15 0 0);
+  --fc-sidebar-muted: oklch(0.46 0 0);
+  --fc-content-border: var(--fc-sidebar-border);
+  --fc-surface: oklch(0.985 0 0);
+  --fc-table-row-hover: oklch(0.96 0 0);
+  --fc-font-sans: "Inter", "Segoe UI", sans-serif;
+  --border: var(--fc-sidebar-border);
+  --input: var(--fc-sidebar-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.16 0 0);
+    --foreground: oklch(0.97 0 0);
+    --primary: oklch(0.97 0 0);
+    --primary-foreground: oklch(0.17 0 0);
+    --secondary: oklch(0.26 0 0);
+    --secondary-foreground: oklch(0.96 0 0);
+    --muted: oklch(0.24 0 0);
+    --muted-foreground: oklch(0.75 0 0);
+    --accent: oklch(0.24 0 0);
+    --accent-foreground: oklch(0.96 0 0);
+    --popover: oklch(0.16 0 0);
+    --popover-foreground: oklch(0.97 0 0);
+    --ring: oklch(0.72 0 0);
+
+    --fc-canvas: oklch(0.11 0 0);
+    --fc-shell-bg: oklch(0.13 0 0);
+    --fc-sidebar-bg: oklch(0.1 0 0);
+    --fc-sidebar-border: oklch(0.24 0 0);
+    --fc-sidebar-hover-bg: oklch(0.2 0 0 / 0.75);
+    --fc-sidebar-active-bg: oklch(0.22 0 0);
+    --fc-sidebar-active-text: oklch(0.99 0 0);
+    --fc-sidebar-muted: oklch(0.73 0 0);
+    --fc-content-border: var(--fc-sidebar-border);
+    --fc-surface: oklch(0.12 0 0);
+    --fc-table-row-hover: oklch(0.18 0 0);
+    --border: var(--fc-sidebar-border);
+    --input: var(--fc-sidebar-border);
+  }
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(
-      circle at 10% 10%,
-      var(--fc-canvas-accent),
-      transparent 33%
-    ), linear-gradient(180deg, oklch(0.99 0.005 95), var(--fc-canvas));
+  min-height: 100dvh;
+  background: var(--fc-canvas);
   color: var(--foreground);
   font-family: var(--fc-font-sans);
 }
 
 .fc-display {
-  font-family: var(--fc-font-display);
-  letter-spacing: -0.02em;
+  font-family: var(--fc-font-sans);
 }
 
 .fc-app-shell {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--fc-shell-bg);
 }
 
 .fc-sidebar {
-  --fc-sidebar-width: 17.5rem;
+  --fc-sidebar-width: 15rem;
   position: sticky;
   top: 0;
   display: none;
-  height: 100vh;
+  height: 100dvh;
   width: var(--fc-sidebar-width);
   min-width: var(--fc-sidebar-width);
   max-width: var(--fc-sidebar-width);
@@ -56,21 +99,298 @@ body {
   flex-direction: column;
   border-right: 1px solid var(--fc-sidebar-border);
   background: var(--fc-sidebar-bg);
-  color: oklch(0.93 0.01 250);
-  padding: 1.5rem 1rem;
-  overflow-x: clip;
-  transition: width 0.18s ease, padding 0.18s ease;
+  padding: 0.75rem;
+  overflow: hidden;
+  transition: width 180ms ease, min-width 180ms ease, max-width 180ms ease;
 }
 
 .fc-sidebar-collapsed {
-  --fc-sidebar-width: 4.75rem;
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
+  --fc-sidebar-width: 4rem;
+}
+
+html[data-fc-sidebar-collapsed="true"] .fc-sidebar {
+  --fc-sidebar-width: 4rem;
+}
+
+html[data-fc-sidebar-collapsed="true"] .fc-sidebar .fc-sidebar-top {
+  justify-content: center;
+}
+
+html[data-fc-sidebar-collapsed="true"] .fc-sidebar .fc-brand-link {
+  display: none;
+}
+
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-top
+  .fc-collapse-button
+  svg {
+  transform: scaleX(-1);
+}
+
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-nav
+  .fc-nav-item {
+  justify-content: center;
+  padding: 0;
+}
+
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-nav
+  .fc-nav-item
+  > span {
+  display: none;
+}
+
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-bottom
+  .fc-sidebar-settings,
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-bottom
+  .fc-profile-trigger {
+  width: 2.4rem;
+  justify-content: center;
+  justify-self: center;
+  padding: 0;
+}
+
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-bottom
+  .fc-profile-name,
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-bottom
+  .fc-tenant-label,
+html[data-fc-sidebar-collapsed="true"]
+  .fc-sidebar
+  .fc-sidebar-bottom
+  .fc-tenant-select-trigger {
+  display: none;
+}
+
+.fc-sidebar-top {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fc-brand-link {
+  display: inline-flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.625rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.fc-collapse-button {
+  display: inline-flex;
+  height: 2.4rem;
+  width: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--fc-sidebar-muted);
+}
+
+.fc-collapse-button:hover {
+  border-color: var(--fc-sidebar-border);
+  background: var(--fc-sidebar-hover-bg);
+  color: var(--foreground);
+}
+
+.fc-sidebar-nav {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.fc-nav-item {
+  display: inline-flex;
+  height: 2.4rem;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.625rem;
+  padding: 0 0.625rem;
+  color: var(--fc-sidebar-muted);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.fc-nav-item:hover {
+  background: var(--fc-sidebar-hover-bg);
+  color: var(--foreground);
+}
+
+.fc-nav-item-active {
+  background: var(--fc-sidebar-active-bg);
+  color: var(--fc-sidebar-active-text);
+}
+
+.fc-nav-item-collapsed {
+  justify-content: center;
+  padding: 0;
+}
+
+.fc-sidebar-bottom {
+  margin-top: auto;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.fc-sidebar-bottom-expanded {
+  animation: fc-sidebar-content-in 180ms ease-out;
+}
+
+.fc-sidebar-bottom-collapsed {
+  animation: fc-sidebar-content-in 150ms ease-out;
+}
+
+.fc-sidebar-separator {
+  height: 1px;
+  background: var(--fc-sidebar-border);
+  margin: 0.1rem -0.75rem;
+}
+
+.fc-sidebar-settings,
+.fc-profile-trigger {
+  display: inline-flex;
+  min-height: 2.4rem;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  background: transparent;
+  padding: 0.5rem;
+  color: var(--fc-sidebar-muted);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.fc-sidebar-settings:hover,
+.fc-profile-trigger:hover {
+  border-color: var(--fc-sidebar-border);
+  background: var(--fc-sidebar-hover-bg);
+  color: var(--foreground);
+}
+
+.fc-sidebar-settings-collapsed,
+.fc-profile-trigger-collapsed {
+  width: 2.4rem;
+  justify-content: center;
+  justify-self: center;
+  padding: 0;
+}
+
+.fc-profile-avatar {
+  display: inline-flex;
+  height: 1.45rem;
+  width: 1.45rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.fc-profile-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+
+.fc-tenant-select-trigger {
+  width: 100%;
+  height: 2rem;
+  min-height: 2rem;
+  border-color: var(--fc-sidebar-border);
+  background: transparent;
+  color: var(--fc-sidebar-muted);
+  font-size: 0.74rem;
+  padding-inline: 0.5rem;
+}
+
+.fc-tenant-select-trigger[data-placeholder] {
+  color: var(--fc-sidebar-muted);
+}
+
+.fc-tenant-label {
+  margin: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0.5rem;
+  color: var(--fc-sidebar-muted);
+  font-size: 0.74rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.fc-modal-link {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.4rem;
+  align-items: center;
+  border: 1px solid var(--fc-sidebar-border);
+  border-radius: 0.625rem;
+  padding: 0 0.75rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.fc-modal-link:hover {
+  background: var(--fc-sidebar-hover-bg);
+}
+
+@keyframes fc-sidebar-content-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .fc-mobile-nav {
-  background: oklch(1 0 0 / 92%);
-  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--fc-content-border);
+  padding: 0.75rem 1rem;
+}
+
+.fc-mobile-profile {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fc-sidebar-border);
+  border-radius: 999px;
+  background: var(--fc-sidebar-hover-bg);
+  color: var(--foreground);
 }
 
 @media (min-width: 1024px) {
