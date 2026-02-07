@@ -19,6 +19,7 @@
   --popover: oklch(0.995 0 0);
   --popover-foreground: oklch(0.165 0 0);
   --ring: color-mix(in oklch, var(--fc-sidebar-border) 78%, white 22%);
+  --radius: 0.4375rem;
 
   --fc-canvas: oklch(0.95 0 0);
   --fc-shell-bg: oklch(0.98 0 0);
@@ -69,12 +70,43 @@
   }
 }
 
+@theme inline {
+  --radius-xs: calc(var(--radius) - 6px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
+  --radius-3xl: calc(var(--radius) + 8px);
+}
+
 body {
   margin: 0;
   min-height: 100dvh;
   background: var(--fc-canvas);
   color: var(--foreground);
   font-family: var(--fc-font-sans);
+}
+
+input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+input[type="search"]::-ms-clear,
+input[type="search"]::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .fc-display {
@@ -189,7 +221,7 @@ html[data-fc-sidebar-collapsed="true"]
   flex: 1;
   align-items: center;
   gap: 0.625rem;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   color: var(--foreground);
   text-decoration: none;
 }
@@ -201,7 +233,7 @@ html[data-fc-sidebar-collapsed="true"]
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--fc-sidebar-muted);
 }
@@ -223,7 +255,7 @@ html[data-fc-sidebar-collapsed="true"]
   height: 2.4rem;
   align-items: center;
   gap: 0.625rem;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   padding: 0 0.625rem;
   color: var(--fc-sidebar-muted);
   text-decoration: none;
@@ -274,7 +306,7 @@ html[data-fc-sidebar-collapsed="true"]
   align-items: center;
   gap: 0.625rem;
   border: 1px solid transparent;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   background: transparent;
   padding: 0.5rem;
   color: var(--fc-sidebar-muted);
@@ -352,7 +384,7 @@ html[data-fc-sidebar-collapsed="true"]
   min-height: 2.4rem;
   align-items: center;
   border: 1px solid var(--fc-sidebar-border);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   padding: 0 0.75rem;
   color: var(--foreground);
   text-decoration: none;

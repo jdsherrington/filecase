@@ -24,7 +24,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Check, ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { listClientsServerFn } from "../server/auth/server-fns";
@@ -60,10 +60,10 @@ const STATUS_OPTIONS: FilterOption<StatusFilter>[] = [
 ];
 
 const DATE_ADDED_OPTIONS: FilterOption<DateAddedFilter>[] = [
-  { label: "Any time", value: "all" },
   { label: "Last 7 days", value: "7d" },
   { label: "Last 30 days", value: "30d" },
   { label: "Last 90 days", value: "90d" },
+  { label: "No date limit", value: "all" },
 ];
 
 function toUtcDayStart(date: Date): string {
@@ -348,6 +348,7 @@ type MultiFilterComboboxProps<TValue extends string> = {
   defaultValues: TValue[];
   values: TValue[];
   options: FilterOption<TValue>[];
+  className?: string;
   onChange: (nextValues: TValue[]) => void;
 };
 
@@ -358,6 +359,7 @@ function MultiFilterCombobox<TValue extends string>({
   defaultValues,
   values,
   options,
+  className,
   onChange,
 }: MultiFilterComboboxProps<TValue>) {
   const [open, setOpen] = useState(false);
@@ -465,7 +467,7 @@ function MultiFilterCombobox<TValue extends string>({
   }, [open]);
 
   return (
-    <div className="w-[11.5rem] shrink-0">
+    <div className={className ?? "w-[11.5rem] shrink-0"}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverAnchor asChild>
           <div className="relative">
@@ -690,7 +692,7 @@ function modeDocumentTypeBaseline(mode: RecordsAreaMode): string[] | undefined {
 }
 
 function defaultDateAddedFilter(): DateAddedFilter {
-  return "all";
+  return "7d";
 }
 
 export function RecordsArea({
@@ -860,11 +862,44 @@ export function RecordsArea({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const clearSearch = () => {
+    setOffset(0);
+    setSearch("");
+  };
+
+  const clearFilters = () => {
+    setOffset(0);
+    setSearch("");
+    setStatuses(defaultStatusFilters());
+    setDateAdded(defaultDateAddedFilter());
+    setPageSize("30");
+    setContactIds(defaultContactFilters(mode, presetClientId));
+    setFileTypes(defaultFileTypeFilters(mode));
+  };
+
   return (
     <div className="space-y-3">
       <section className="rounded-2xl border border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full min-w-[17rem] flex-1">
+            <button
+              aria-hidden={search.length === 0}
+              aria-label="Clear search"
+              className={cn(
+                "absolute inset-y-0 right-0 z-10 flex w-8 cursor-pointer items-center justify-center text-[color:color-mix(in_oklch,var(--muted-foreground)_78%,transparent)] transition-[opacity,color] duration-220 ease-out hover:text-[color:var(--fc-destructive)]",
+                search.length > 0
+                  ? "opacity-100 pointer-events-auto"
+                  : "opacity-0 pointer-events-none",
+              )}
+              tabIndex={search.length > 0 ? 0 : -1}
+              type="button"
+              onClick={clearSearch}
+              onMouseDown={(event) => {
+                event.preventDefault();
+              }}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
             <Search
               aria-hidden="true"
               className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
@@ -872,7 +907,7 @@ export function RecordsArea({
             <Input
               aria-label={areaSearchPlaceholder(mode)}
               autoComplete="off"
-              className="h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] pl-8 text-xs"
+              className="h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] pl-8 pr-8 text-xs"
               placeholder={areaSearchPlaceholder(mode)}
               type="search"
               value={search}
@@ -883,24 +918,17 @@ export function RecordsArea({
             />
           </div>
           <Button
-            className="h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] px-3 text-xs"
+            className="h-9 gap-1.5 border border-transparent bg-[color:color-mix(in_oklch,var(--foreground)_86%,var(--background)_14%)] px-4 text-xs font-semibold text-[color:var(--background)] hover:bg-[color:color-mix(in_oklch,var(--foreground)_80%,var(--background)_20%)]"
             type="button"
-            variant="outline"
-            onClick={() => {
-              setOffset(0);
-              setSearch("");
-              setStatuses(defaultStatusFilters());
-              setDateAdded("all");
-              setPageSize("30");
-              setContactIds(defaultContactFilters(mode, presetClientId));
-              setFileTypes(defaultFileTypeFilters(mode));
-            }}
+            variant="ghost"
           >
-            Clear filters/search
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Record</span>
           </Button>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <MultiFilterCombobox
+            className="min-w-[13rem] basis-[13rem] grow"
             defaultValues={defaultContactFilters(mode, presetClientId)}
             label="Contact"
             options={clientOptions}
@@ -956,6 +984,14 @@ export function RecordsArea({
               setPageSize(nextValue);
             }}
           />
+          <Button
+            className="ml-auto h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] px-3 text-xs"
+            type="button"
+            variant="outline"
+            onClick={clearFilters}
+          >
+            Clear Filters
+          </Button>
         </div>
       </section>
 
