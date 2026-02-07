@@ -15,14 +15,14 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground transition-[box-shadow,border-color,outline-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--ring)] data-[state=open]:ring-1 data-[state=open]:ring-[color:var(--ring)] [&[data-state=open]_.fc-select-chevron]:rotate-180 disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-60" />
+      <ChevronDown className="fc-select-chevron h-4 w-4 opacity-60 transition-transform duration-150 ease-out" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -71,7 +71,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "fc-select-content relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover/50 text-popover-foreground shadow-md backdrop-blur-md",
+        "fc-select-content relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover/90 text-popover-foreground shadow-md backdrop-blur-md",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,

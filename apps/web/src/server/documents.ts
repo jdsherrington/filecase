@@ -81,6 +81,10 @@ function buildDocumentFilters(input: {
     whereClauses.push(eq(documents.clientId, input.query.clientId));
   }
 
+  if (input.query.clientIds?.length) {
+    whereClauses.push(inArray(documents.clientId, input.query.clientIds));
+  }
+
   if (input.query.engagementId) {
     whereClauses.push(eq(documents.engagementId, input.query.engagementId));
   }
@@ -89,8 +93,18 @@ function buildDocumentFilters(input: {
     whereClauses.push(eq(documents.status, input.query.status));
   }
 
+  if (input.query.statuses?.length) {
+    whereClauses.push(inArray(documents.status, input.query.statuses));
+  }
+
   if (input.query.documentType) {
     whereClauses.push(eq(documents.documentType, input.query.documentType));
+  }
+
+  if (input.query.documentTypes?.length) {
+    whereClauses.push(
+      inArray(documents.documentType, input.query.documentTypes),
+    );
   }
 
   if (input.query.uploadedDateStart) {

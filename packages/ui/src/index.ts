@@ -1,6 +1,14 @@
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Checkbox } from "./components/checkbox";
 export {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "./components/command";
+export {
   Dialog,
   DialogClose,
   DialogContent,
@@ -30,6 +38,12 @@ export {
   DropdownMenuTrigger,
 } from "./components/dropdown-menu";
 export { Input } from "./components/input";
+export {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from "./components/popover";
 export {
   Select,
   SelectContent,

@@ -139,6 +139,14 @@ export const listDocumentsServerFn = createServerFn({ method: "GET" })
         throw new Error("NOT_FOUND");
       }
 
+      if (data.clientIds?.length) {
+        for (const clientId of data.clientIds) {
+          if (!(await canReadClient(tenant.user, clientId))) {
+            throw new Error("NOT_FOUND");
+          }
+        }
+      }
+
       if (
         data.engagementId &&
         !(await canReadEngagement(tenant.user, data.engagementId))

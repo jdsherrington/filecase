@@ -75,24 +75,24 @@
 @keyframes fc-pop-in {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: translateY(-0.35rem);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes fc-pop-out {
   from {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 
   to {
     opacity: 0;
-    transform: scale(0.98);
+    transform: translateY(-0.35rem);
   }
 }
 
@@ -120,14 +120,22 @@
   }
 }
 
+.fc-dropdown-content,
+.fc-select-content,
+.fc-popover-content {
+  will-change: opacity, transform;
+}
+
 .fc-dropdown-content[data-state="open"],
-.fc-select-content[data-state="open"] {
-  animation: fc-pop-in 160ms ease-out;
+.fc-select-content[data-state="open"],
+.fc-popover-content[data-state="open"] {
+  animation: fc-pop-in 170ms ease-out;
 }
 
 .fc-dropdown-content[data-state="closed"],
-.fc-select-content[data-state="closed"] {
-  animation: fc-pop-out 130ms ease-in;
+.fc-select-content[data-state="closed"],
+.fc-popover-content[data-state="closed"] {
+  animation: fc-pop-out 150ms ease-in;
 }
 
 .fc-dialog-overlay[data-state="open"] {
@@ -149,6 +157,7 @@
 @media (prefers-reduced-motion: reduce) {
   .fc-dropdown-content,
   .fc-select-content,
+  .fc-popover-content,
   .fc-dialog-overlay,
   .fc-dialog-content {
     animation: none !important;

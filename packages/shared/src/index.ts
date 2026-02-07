@@ -48,10 +48,13 @@ export type DocumentSortBy = z.infer<typeof documentSortBySchema>;
 
 export const paginatedDocumentsQuerySchema = z.object({
   clientId: z.string().uuid().optional(),
+  clientIds: z.array(z.string().uuid()).min(1).optional(),
   engagementId: z.string().uuid().optional(),
   q: z.string().trim().min(1).optional(),
   status: documentStatusSchema.optional(),
+  statuses: z.array(documentStatusSchema).min(1).optional(),
   documentType: z.string().trim().min(1).optional(),
+  documentTypes: z.array(z.string().trim().min(1)).min(1).optional(),
   uploadedDateStart: z.string().datetime().optional(),
   uploadedDateEnd: z.string().datetime().optional(),
   uploadedByUserId: z.string().uuid().optional(),
