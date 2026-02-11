@@ -1,12 +1,17 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Suspense, lazy } from "react";
 
 import { AppShell } from "../components/app-shell";
-import { RecordsArea } from "../components/records-area";
 import { getCurrentUserServerFn } from "../server/auth/server-fns";
 
 type RecordsSearch = {
   contactId?: string;
 };
+
+const LazyRecordsArea = lazy(async () => {
+  const module = await import("../components/records-area");
+  return { default: module.RecordsArea };
+});
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): RecordsSearch => ({
@@ -44,7 +49,17 @@ function RecordsRoutePage() {
 
   return (
     <AppShell user={user}>
-      <RecordsArea mode="records" presetClientId={search.contactId} />
+      <Suspense
+        fallback={
+          <div className="fc-records-shell">
+            <div className="flex min-h-[320px] items-center justify-center rounded-md border border-border bg-secondary/30 text-sm text-muted-foreground">
+              Loading records...
+            </div>
+          </div>
+        }
+      >
+        <LazyRecordsArea mode="records" presetClientId={search.contactId} />
+      </Suspense>
     </AppShell>
   );
 }

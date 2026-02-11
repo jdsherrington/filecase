@@ -1,8 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Suspense, lazy } from "react";
 
 import { AppShell } from "../components/app-shell";
-import { RecordsArea } from "../components/records-area";
 import { getCurrentUserServerFn } from "../server/auth/server-fns";
+
+const LazyRecordsArea = lazy(async () => {
+  const module = await import("../components/records-area");
+  return { default: module.RecordsArea };
+});
 
 export const Route = createFileRoute("/internal")({
   beforeLoad: async () => {
@@ -33,7 +38,17 @@ function InternalRoutePage() {
 
   return (
     <AppShell user={user}>
-      <RecordsArea mode="internal" />
+      <Suspense
+        fallback={
+          <div className="fc-records-shell">
+            <div className="flex min-h-[320px] items-center justify-center rounded-md border border-border bg-secondary/30 text-sm text-muted-foreground">
+              Loading internal records...
+            </div>
+          </div>
+        }
+      >
+        <LazyRecordsArea mode="internal" />
+      </Suspense>
     </AppShell>
   );
 }

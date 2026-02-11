@@ -64,4 +64,10 @@ export {
   TableHeader,
   TableRow,
 } from "./components/table";
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./components/tooltip";
 export { cn } from "./lib-utils";

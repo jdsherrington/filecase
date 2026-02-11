@@ -1,14 +1,18 @@
 import {
   Button,
   Checkbox,
-  Command,
-  CommandEmpty,
-  CommandItem,
-  CommandList,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Input,
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Table,
   TableBody,
   TableCell,
@@ -17,23 +21,27 @@ import {
   TableRow,
   cn,
 } from "@filecase/ui";
-import { queryOptions, useQuery } from "@tanstack/react-query";
 import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { Check, ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, MoreVertical, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { listClientsServerFn } from "../server/auth/server-fns";
-import { listDocumentsServerFn } from "../server/document-fns";
+import {
+  listDocumentsServerFn,
+  listEngagementsServerFn,
+  uploadInitialDocumentServerFn,
+} from "../server/document-fns";
 
 type RecordsAreaMode = "records" | "templates" | "internal";
 type DateAddedFilter = "all" | "7d" | "30d" | "90d";
 type PageSize = "30" | "60" | "90" | "120";
 type StatusFilter = "uploaded" | "in_review" | "final";
+type SelectValueWithAll = "all" | StatusFilter;
 
 type FilterOption<TValue extends string> = {
   label: string;
@@ -43,27 +51,39 @@ type FilterOption<TValue extends string> = {
 type DocumentRow = Awaited<
   ReturnType<typeof listDocumentsServerFn>
 >["items"][number];
-
-const columnHelper = createColumnHelper<DocumentRow>();
+type ClientRow = Awaited<ReturnType<typeof listClientsServerFn>>[number];
+type EngagementRow = Awaited<
+  ReturnType<typeof listEngagementsServerFn>
+>[number];
+type TableDisplayRow = {
+  id: string;
+  title: string;
+  status: string;
+  contact: string;
+  filetype: string;
+  dateAdded: string;
+  dateModified: string;
+};
 
 const PAGE_SIZES: FilterOption<PageSize>[] = [
-  { label: "30", value: "30" },
-  { label: "60", value: "60" },
-  { label: "90", value: "90" },
-  { label: "120", value: "120" },
+  { label: "30 rows per page", value: "30" },
+  { label: "60 rows per page", value: "60" },
+  { label: "90 rows per page", value: "90" },
+  { label: "120 rows per page", value: "120" },
 ];
 
-const STATUS_OPTIONS: FilterOption<StatusFilter>[] = [
+const STATUS_OPTIONS: FilterOption<SelectValueWithAll>[] = [
+  { label: "Status", value: "all" },
   { label: "Uploaded", value: "uploaded" },
   { label: "In review", value: "in_review" },
   { label: "Final", value: "final" },
 ];
 
 const DATE_ADDED_OPTIONS: FilterOption<DateAddedFilter>[] = [
-  { label: "Last 7 days", value: "7d" },
-  { label: "Last 30 days", value: "30d" },
-  { label: "Last 90 days", value: "90d" },
-  { label: "No date limit", value: "all" },
+  { label: "Added 7 days ago", value: "7d" },
+  { label: "Added 30 days ago", value: "30d" },
+  { label: "Added 90 days ago", value: "90d" },
+  { label: "Any date", value: "all" },
 ];
 
 function toUtcDayStart(date: Date): string {
@@ -143,540 +163,433 @@ function areaEmptyMessage(mode: RecordsAreaMode): string {
 }
 
 function formatStatus(value: string): string {
-  return value.replace("_", " ");
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleString();
+  const date = new Date(value);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear());
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const period = date.getHours() >= 12 ? "PM" : "AM";
+  const hour24 = date.getHours();
+  const hour12 = hour24 % 12 || 12;
+  const hours = String(hour12).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes} ${period}`;
 }
 
-type SingleFilterComboboxProps<TValue extends string> = {
-  label: string;
-  placeholder: string;
+function formatFiletype(value: string): string {
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return "-";
+  }
+
+  if (trimmed.startsWith(".")) {
+    return trimmed.toUpperCase();
+  }
+
+  return `.${trimmed.toUpperCase()}`;
+}
+
+function buildDemoRows(offset: number, limit: number): TableDisplayRow[] {
+  return Array.from({ length: limit }, (_, index) => ({
+    id: `demo-${offset + index + 1}`,
+    title: "Example document title",
+    status: "Final",
+    contact: "ACME Engineering Pty Ltd",
+    filetype: ".PDF",
+    dateAdded: "06/02/2026 01:54 PM",
+    dateModified: "08/02/2026 10:04 AM",
+  }));
+}
+
+type FilterSelectProps<TValue extends string> = {
   value: TValue;
   options: FilterOption<TValue>[];
-  onChange: (nextValue: TValue) => void;
+  activeWhen?: (value: TValue) => boolean;
+  className?: string;
+  onValueChange: (value: TValue) => void;
 };
 
-function SingleFilterSelect<TValue extends string>({
-  label,
-  placeholder,
+function FilterSelect<TValue extends string>({
   value,
   options,
-  onChange,
-}: SingleFilterComboboxProps<TValue>) {
-  const [open, setOpen] = useState(false);
-  const fieldId = useId();
-
-  const selectedOption = useMemo(
-    () => options.find((option) => option.value === value),
-    [options, value],
-  );
-  const currentLabel = selectedOption?.label ?? placeholder;
-  const isPlaceholder = !selectedOption;
-  const animatedLabel = useCrossfadeText(currentLabel, isPlaceholder);
+  activeWhen,
+  className,
+  onValueChange,
+}: FilterSelectProps<TValue>) {
+  const isActive = activeWhen ? activeWhen(value) : true;
 
   return (
-    <div className="w-[11.5rem] shrink-0">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverAnchor asChild>
-          <button
-            aria-controls={`${fieldId}-listbox`}
-            aria-expanded={open}
-            aria-haspopup="listbox"
-            aria-label={label}
-            className={cn(
-              "flex h-9 w-full items-center justify-between rounded-md border border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] px-3 text-xs transition-[box-shadow,border-color,outline-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--ring)]",
-              open ? "ring-1 ring-[color:var(--ring)]" : undefined,
-            )}
-            type="button"
-            onClick={() => setOpen((current) => !current)}
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger
+        className={cn(
+          "fc-filter-control",
+          isActive ? "fc-filter-control-active" : "fc-filter-control-muted",
+          className,
+        )}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent className="fc-filter-content">
+        {options.map((option) => (
+          <SelectItem
+            className="fc-filter-item"
+            key={option.value}
+            value={option.value}
           >
-            <span className="relative block min-w-0 flex-1 text-left text-xs leading-none">
-              {animatedLabel.previousText ? (
-                <span
-                  className={cn(
-                    "pointer-events-none absolute inset-0 truncate",
-                    animatedLabel.previousText
-                      ? "fc-filter-value-out"
-                      : undefined,
-                    animatedLabel.previousMuted
-                      ? "text-muted-foreground"
-                      : undefined,
-                  )}
-                >
-                  {animatedLabel.previousText}
-                </span>
-              ) : null}
-              <span
-                className={cn(
-                  "block truncate",
-                  animatedLabel.previousText ? "fc-filter-value-in" : undefined,
-                  animatedLabel.currentMuted
-                    ? "text-muted-foreground"
-                    : undefined,
-                )}
-              >
-                {animatedLabel.currentText}
-              </span>
-            </span>
-            {open ? (
-              <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
-          </button>
-        </PopoverAnchor>
-        <PopoverContent
-          align="start"
-          className="w-[var(--radix-popover-trigger-width)] border-[color:var(--fc-content-border)] p-1"
-          sideOffset={6}
-          onOpenAutoFocus={(event) => {
-            event.preventDefault();
-          }}
-        >
-          <Command shouldFilter={false}>
-            <CommandList className="max-h-56" id={`${fieldId}-listbox`}>
-              {options.length === 0 ? (
-                <CommandEmpty className="px-2 py-2 text-xs text-muted-foreground">
-                  No options found.
-                </CommandEmpty>
-              ) : (
-                options.map((option) => {
-                  const selected = value === option.value;
-
-                  return (
-                    <CommandItem
-                      className={cn(
-                        "cursor-pointer gap-2 text-xs data-[selected=true]:bg-transparent data-[selected=true]:text-foreground",
-                        selected &&
-                          "bg-[color:var(--fc-table-row-hover)] text-foreground",
-                      )}
-                      key={option.value}
-                      value={option.label}
-                      onSelect={() => {
-                        onChange(option.value);
-                        setOpen(false);
-                      }}
-                    >
-                      <span
-                        className={cn(
-                          "flex h-3.5 w-3.5 items-center justify-center text-foreground transition-opacity duration-150",
-                          selected ? "opacity-100" : "opacity-0",
-                        )}
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="truncate">{option.label}</span>
-                    </CommandItem>
-                  );
-                })
-              )}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
-function hasSameSelections<TValue extends string>(
-  left: TValue[],
-  right: TValue[],
-): boolean {
-  if (left.length !== right.length) {
-    return false;
+function formatCreateRecordError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Failed to add record.";
   }
 
-  const rightSet = new Set(right);
+  if (error.message === "FORBIDDEN") {
+    return "You do not have permission to add records to that engagement.";
+  }
 
-  return left.every((value) => rightSet.has(value));
+  if (error.message === "NOT_FOUND") {
+    return "The selected client or engagement was not found.";
+  }
+
+  if (error.message === "FILE_TOO_LARGE") {
+    return "The selected file is too large.";
+  }
+
+  if (error.message === "UNSUPPORTED_MIME_TYPE") {
+    return "This file type is not supported.";
+  }
+
+  if (error.message.startsWith("MISSING_FIELD:")) {
+    return "Please complete all required fields.";
+  }
+
+  if (error.message.startsWith("MISSING_FILE:")) {
+    return "Please choose a file to upload.";
+  }
+
+  return error.message.length > 0 ? error.message : "Failed to add record.";
 }
 
-type CrossfadeTextState = {
-  currentText: string;
-  currentMuted: boolean;
-  previousText: string | null;
-  previousMuted: boolean;
+type AddRecordDialogProps = {
+  clients: ClientRow[];
+  mode: RecordsAreaMode;
+  open: boolean;
+  onOpenChange: (nextOpen: boolean) => void;
+  onRecordCreated: () => Promise<void>;
 };
 
-function useCrossfadeText(text: string, muted = false): CrossfadeTextState {
-  const [state, setState] = useState<CrossfadeTextState>({
-    currentText: text,
-    currentMuted: muted,
-    previousText: null,
-    previousMuted: muted,
-  });
-  const previousInputRef = useRef({ text, muted });
+function defaultDocumentTypeForMode(mode: RecordsAreaMode): string {
+  if (mode === "templates") {
+    return "template";
+  }
+
+  if (mode === "internal") {
+    return "internal";
+  }
+
+  return "";
+}
+
+function AddRecordDialog({
+  clients,
+  mode,
+  open,
+  onOpenChange,
+  onRecordCreated,
+}: AddRecordDialogProps) {
+  const [title, setTitle] = useState("");
+  const [documentType, setDocumentType] = useState(
+    defaultDocumentTypeForMode(mode),
+  );
+  const [clientId, setClientId] = useState("");
+  const [engagementId, setEngagementId] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setTitle("");
+    setDocumentType(defaultDocumentTypeForMode(mode));
+    setClientId("");
+    setEngagementId("");
+    setFile(null);
+    setFileInputKey((current) => current + 1);
+    setError(null);
+  };
 
   useEffect(() => {
-    const previousInput = previousInputRef.current;
+    setDocumentType(defaultDocumentTypeForMode(mode));
+  }, [mode]);
 
-    if (previousInput.text === text && previousInput.muted === muted) {
-      return;
-    }
+  const engagementsQuery = useQuery(
+    queryOptions({
+      enabled: open && clientId.length > 0,
+      queryKey: ["records-area-engagements", clientId],
+      queryFn: () => listEngagementsServerFn({ data: { clientId } }),
+    }),
+  );
 
-    previousInputRef.current = { text, muted };
+  const addRecordMutation = useMutation({
+    mutationFn: async () => {
+      const trimmedTitle = title.trim();
+      const trimmedDocumentType = documentType.trim();
 
-    setState((previousState) => ({
-      currentText: text,
-      currentMuted: muted,
-      previousText: previousState.currentText,
-      previousMuted: previousState.currentMuted,
-    }));
-
-    const timeoutId = window.setTimeout(() => {
-      setState((previousState) =>
-        previousState.previousText === null
-          ? previousState
-          : { ...previousState, previousText: null },
-      );
-    }, 280);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [muted, text]);
-
-  return state;
-}
-
-type MultiFilterComboboxProps<TValue extends string> = {
-  label: string;
-  pluralLabel: string;
-  placeholder: string;
-  defaultValues: TValue[];
-  values: TValue[];
-  options: FilterOption<TValue>[];
-  className?: string;
-  onChange: (nextValues: TValue[]) => void;
-};
-
-function MultiFilterCombobox<TValue extends string>({
-  label,
-  pluralLabel,
-  placeholder,
-  defaultValues,
-  values,
-  options,
-  className,
-  onChange,
-}: MultiFilterComboboxProps<TValue>) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [showSingularCountSummary, setShowSingularCountSummary] =
-    useState(false);
-  const fieldId = useId();
-  const previousValuesLengthRef = useRef(values.length);
-
-  const optionLabelByValue = useMemo(() => {
-    const map = new Map<TValue, string>();
-
-    for (const option of options) {
-      map.set(option.value, option.label);
-    }
-
-    return map;
-  }, [options]);
-
-  const closedSummaryValue = useMemo(() => {
-    if (values.length === 0) {
-      return "";
-    }
-
-    if (values.length === 1) {
-      const [singleValue] = values;
-
-      return singleValue ? (optionLabelByValue.get(singleValue) ?? "") : "";
-    }
-
-    return `${values.length} ${pluralLabel}`;
-  }, [optionLabelByValue, pluralLabel, values]);
-
-  const shouldUseSingularCountSummary =
-    showSingularCountSummary ||
-    (previousValuesLengthRef.current !== 1 && values.length === 1);
-
-  const openSummaryValue = useMemo(() => {
-    if (values.length === 0) {
-      return "";
-    }
-
-    if (values.length === 1) {
-      if (shouldUseSingularCountSummary) {
-        return `1 ${label}`;
+      if (trimmedTitle.length === 0) {
+        throw new Error("MISSING_FIELD:title");
       }
 
-      const [singleValue] = values;
-      return singleValue ? (optionLabelByValue.get(singleValue) ?? "") : "";
-    }
+      if (trimmedDocumentType.length === 0) {
+        throw new Error("MISSING_FIELD:document_type");
+      }
 
-    return `${values.length} ${pluralLabel}`;
-  }, [
-    label,
-    optionLabelByValue,
-    pluralLabel,
-    shouldUseSingularCountSummary,
-    values,
-  ]);
+      if (clientId.length === 0) {
+        throw new Error("MISSING_FIELD:client_id");
+      }
 
-  const filteredOptions = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+      if (engagementId.length === 0) {
+        throw new Error("MISSING_FIELD:engagement_id");
+      }
 
-    if (!needle) {
-      return options;
-    }
+      if (!file) {
+        throw new Error("MISSING_FILE:file");
+      }
 
-    return options.filter((option) =>
-      option.label.toLowerCase().includes(needle),
-    );
-  }, [options, query]);
+      const formData = new FormData();
+      formData.set("title", trimmedTitle);
+      formData.set("document_type", trimmedDocumentType);
+      formData.set("client_id", clientId);
+      formData.set("engagement_id", engagementId);
+      formData.set("file", file);
 
-  const showClear =
-    values.length > 0 && !hasSameSelections(values, defaultValues);
-  const displayValue =
-    open && query.length > 0
-      ? query
-      : open
-        ? openSummaryValue
-        : closedSummaryValue;
-  const animatedValue = useCrossfadeText(displayValue);
-  const shouldUseValueOverlay = query.length === 0;
-  const hasDisplayValue = displayValue.length > 0;
-  const shouldShowValueOverlay = shouldUseValueOverlay;
-  const shouldHideNativeInputText = shouldUseValueOverlay && hasDisplayValue;
+      return uploadInitialDocumentServerFn({ data: formData });
+    },
+    onSuccess: async () => {
+      setError(null);
+      await onRecordCreated();
+      onOpenChange(false);
+      resetForm();
+    },
+    onError: (mutationError) => {
+      setError(formatCreateRecordError(mutationError));
+    },
+  });
 
-  useEffect(() => {
-    const previousLength = previousValuesLengthRef.current;
-    const nextLength = values.length;
-
-    if (previousLength !== 1 && nextLength === 1) {
-      setShowSingularCountSummary(true);
-    } else if (nextLength !== 1) {
-      setShowSingularCountSummary(false);
-    }
-
-    previousValuesLengthRef.current = nextLength;
-  }, [values.length]);
-
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setShowSingularCountSummary(false);
-    }
-  }, [open]);
+  const engagementOptions: EngagementRow[] = engagementsQuery.data ?? [];
+  const hasAllRequiredFields =
+    title.trim().length > 0 &&
+    documentType.trim().length > 0 &&
+    clientId.length > 0 &&
+    engagementId.length > 0 &&
+    file !== null;
 
   return (
-    <div className={className ?? "w-[11.5rem] shrink-0"}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverAnchor asChild>
-          <div className="relative">
-            <button
-              aria-hidden={!showClear}
-              aria-label={`Clear ${label.toLowerCase()} filter`}
-              className={cn(
-                "absolute inset-y-0 left-0 z-10 flex w-8 cursor-pointer items-center justify-center text-[color:color-mix(in_oklch,var(--muted-foreground)_78%,transparent)] transition-[opacity,color] duration-220 ease-out hover:text-[color:var(--fc-destructive)]",
-                showClear
-                  ? "opacity-100 pointer-events-auto"
-                  : "opacity-0 pointer-events-none",
-              )}
-              tabIndex={showClear ? 0 : -1}
-              type="button"
-              onClick={() => {
-                if (!showClear) {
-                  return;
-                }
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        onOpenChange(nextOpen);
 
-                onChange(defaultValues);
-                setOpen(false);
-                setQuery("");
-              }}
-              onMouseDown={(event) => {
-                event.preventDefault();
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-            <Input
-              aria-autocomplete="list"
-              aria-controls={`${fieldId}-listbox`}
-              aria-expanded={open}
-              aria-label={label}
-              className={cn(
-                "h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] pr-8 text-xs transition-[padding-left] duration-230 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                shouldHideNativeInputText ? "text-transparent" : undefined,
-                open ? "ring-1 ring-[color:var(--ring)]" : undefined,
-                showClear ? "pl-8 delay-50" : "delay-0",
-              )}
-              placeholder={placeholder}
-              role="combobox"
-              value={displayValue}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setOpen(true);
-              }}
-              onFocus={() => setOpen(true)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setOpen(false);
-                  return;
-                }
+        if (!nextOpen) {
+          addRecordMutation.reset();
+          resetForm();
+        }
+      }}
+    >
+      <DialogContent className="border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] p-0 sm:max-w-xl">
+        <DialogHeader className="rounded-t-lg border-b border-[color:var(--fc-content-border)] bg-[color:color-mix(in_oklch,var(--foreground)_6%,var(--fc-surface)_94%)] px-5 py-4">
+          <DialogTitle className="text-sm font-semibold tracking-[0.04em] uppercase">
+            Add Record
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Upload a new record and link it to a client engagement.
+          </DialogDescription>
+        </DialogHeader>
 
-                if (event.key === "Enter" && filteredOptions.length === 1) {
-                  event.preventDefault();
-                  const [singleMatch] = filteredOptions;
-
-                  if (singleMatch) {
-                    onChange([singleMatch.value]);
-                    setOpen(false);
-                    setQuery("");
-                  }
-                }
-              }}
-            />
-            {shouldShowValueOverlay ? (
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none absolute inset-y-0 left-3 right-8 flex items-center overflow-hidden text-xs leading-4 transition-transform duration-230 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
-                  showClear
-                    ? "translate-x-5 delay-50"
-                    : "translate-x-0 delay-0",
-                )}
-              >
-                <span className="relative block w-full truncate">
-                  {animatedValue.previousText !== null ? (
-                    <span className="pointer-events-none absolute inset-0 truncate fc-filter-value-out">
-                      {animatedValue.previousText}
-                    </span>
-                  ) : null}
-                  <span
-                    className={cn(
-                      "block truncate",
-                      animatedValue.previousText !== null
-                        ? "fc-filter-value-in"
-                        : undefined,
-                    )}
-                  >
-                    {animatedValue.currentText}
-                  </span>
-                </span>
-              </div>
-            ) : null}
-            <button
-              aria-label={`Toggle ${label.toLowerCase()} options`}
-              className="absolute inset-y-0 right-0 z-10 flex w-8 items-center justify-center text-muted-foreground"
-              tabIndex={-1}
-              type="button"
-              onClick={() => setOpen((current) => !current)}
-              onMouseDown={(event) => {
-                event.preventDefault();
-              }}
-            >
-              {open ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
-            </button>
-          </div>
-        </PopoverAnchor>
-        <PopoverContent
-          align="start"
-          className="w-[var(--radix-popover-trigger-width)] border-[color:var(--fc-content-border)] p-1"
-          sideOffset={6}
-          onOpenAutoFocus={(event) => {
+        <form
+          className="space-y-4 px-5 py-4"
+          onSubmit={(event) => {
             event.preventDefault();
+            setError(null);
+            addRecordMutation.mutate();
           }}
         >
-          <Command shouldFilter={false}>
-            <CommandList className="max-h-56" id={`${fieldId}-listbox`}>
-              {filteredOptions.length === 0 ? (
-                <CommandEmpty className="px-2 py-2 text-xs text-muted-foreground">
-                  No options found.
-                </CommandEmpty>
-              ) : (
-                filteredOptions.map((option) => {
-                  const checked = values.includes(option.value);
-                  const toggleValue = () => {
-                    const nextValues = checked
-                      ? values.filter((value) => value !== option.value)
-                      : [...values, option.value];
-                    onChange(nextValues);
-                  };
+          <div className="space-y-1">
+            <label
+              className="text-[0.68rem] font-semibold tracking-[0.055em] uppercase text-muted-foreground"
+              htmlFor="add-record-title"
+            >
+              Record Title
+            </label>
+            <Input
+              autoComplete="off"
+              className="h-10 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] text-sm"
+              id="add-record-title"
+              placeholder="e.g. Q4 Payroll Summary"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </div>
 
-                  return (
-                    <CommandItem
-                      className={cn(
-                        "cursor-pointer gap-2 text-xs data-[selected=true]:bg-transparent data-[selected=true]:text-foreground",
-                        checked &&
-                          "bg-[color:var(--fc-table-row-hover)] text-foreground",
-                      )}
-                      key={option.value}
-                      value={option.label}
-                      onSelect={() => {
-                        onChange([option.value]);
-                        setOpen(false);
-                        setQuery("");
-                      }}
-                    >
-                      <button
-                        aria-label={`${checked ? "Deselect" : "Select"} ${option.label}`}
-                        className="flex h-3.5 w-3.5 items-center justify-center rounded-[3px] transition-[box-shadow,border-color,outline-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--ring)]"
-                        tabIndex={0}
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          toggleValue();
-                        }}
-                        onKeyDown={(event) => {
-                          event.stopPropagation();
-                        }}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                      >
-                        <Checkbox
-                          checked={checked}
-                          className="pointer-events-none h-3.5 w-3.5 border-[color:color-mix(in_oklch,var(--fc-content-border)_78%,white_22%)]"
-                        />
-                      </button>
-                      <span className="truncate">{option.label}</span>
-                    </CommandItem>
-                  );
-                })
-              )}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label
+                className="text-[0.68rem] font-semibold tracking-[0.055em] uppercase text-muted-foreground"
+                htmlFor="add-record-type"
+              >
+                Filetype
+              </label>
+              <Input
+                autoComplete="off"
+                className="h-10 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] text-sm"
+                id="add-record-type"
+                placeholder="e.g. Policy"
+                required
+                value={documentType}
+                onChange={(event) => setDocumentType(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                className="text-[0.68rem] font-semibold tracking-[0.055em] uppercase text-muted-foreground"
+                htmlFor="add-record-client"
+              >
+                Client
+              </label>
+              <Select
+                value={clientId}
+                onValueChange={(nextValue) => {
+                  setClientId(nextValue);
+                  setEngagementId("");
+                }}
+              >
+                <SelectTrigger
+                  aria-label="Client"
+                  className="h-10 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] text-sm"
+                  id="add-record-client"
+                >
+                  <SelectValue placeholder="Select client" />
+                </SelectTrigger>
+                <SelectContent className="border-[color:var(--fc-content-border)]">
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label
+                className="text-[0.68rem] font-semibold tracking-[0.055em] uppercase text-muted-foreground"
+                htmlFor="add-record-engagement"
+              >
+                Engagement
+              </label>
+              <Select
+                disabled={
+                  addRecordMutation.isPending ||
+                  clientId.length === 0 ||
+                  engagementsQuery.isLoading ||
+                  engagementOptions.length === 0
+                }
+                value={engagementId}
+                onValueChange={(nextValue) => setEngagementId(nextValue)}
+              >
+                <SelectTrigger
+                  aria-label="Engagement"
+                  className="h-10 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] text-sm"
+                  id="add-record-engagement"
+                >
+                  <SelectValue
+                    placeholder={
+                      clientId.length === 0
+                        ? "Choose a client first"
+                        : engagementsQuery.isLoading
+                          ? "Loading engagements..."
+                          : engagementOptions.length === 0
+                            ? "No engagements available"
+                            : "Select engagement"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="border-[color:var(--fc-content-border)]">
+                  {engagementOptions.map((engagement) => (
+                    <SelectItem key={engagement.id} value={engagement.id}>
+                      {engagement.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label
+                className="text-[0.68rem] font-semibold tracking-[0.055em] uppercase text-muted-foreground"
+                htmlFor="add-record-file"
+              >
+                File
+              </label>
+              <Input
+                key={fileInputKey}
+                className="h-10 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] text-sm file:mr-3 file:border-0 file:bg-transparent file:text-xs file:font-semibold file:text-foreground"
+                id="add-record-file"
+                name="file"
+                required
+                type="file"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              />
+            </div>
+          </div>
+
+          {error ? (
+            <p className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-700">
+              {error}
+            </p>
+          ) : null}
+
+          <DialogFooter className="gap-2 border-t border-[color:var(--fc-content-border)] pt-4">
+            <Button
+              className="h-9 border-[color:var(--fc-content-border)] text-xs"
+              disabled={addRecordMutation.isPending}
+              type="button"
+              variant="outline"
+              onClick={() => {
+                addRecordMutation.reset();
+                resetForm();
+                onOpenChange(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="h-9 gap-1.5 px-4 text-xs font-semibold"
+              disabled={!hasAllRequiredFields || addRecordMutation.isPending}
+              type="submit"
+            >
+              {addRecordMutation.isPending ? "Adding..." : "Add Record"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
-}
-
-function defaultContactFilters(
-  mode: RecordsAreaMode,
-  presetClientId?: string,
-): string[] {
-  if (mode === "templates") {
-    return [];
-  }
-
-  return presetClientId ? [presetClientId] : [];
-}
-
-function defaultPageSize(): PageSize {
-  return "30";
-}
-
-function defaultStatusFilters(): StatusFilter[] {
-  return [];
-}
-
-function defaultFileTypeFilters(_mode: RecordsAreaMode): string[] {
-  return [];
 }
 
 function modeDocumentTypeBaseline(mode: RecordsAreaMode): string[] | undefined {
@@ -695,6 +608,39 @@ function defaultDateAddedFilter(): DateAddedFilter {
   return "7d";
 }
 
+function defaultPageSize(): PageSize {
+  return "30";
+}
+
+function defaultContactFilter(
+  mode: RecordsAreaMode,
+  presetClientId?: string,
+): string {
+  if (mode === "templates") {
+    return "none";
+  }
+
+  return presetClientId && presetClientId.length > 0 ? presetClientId : "all";
+}
+
+function defaultFileTypeFilter(_mode: RecordsAreaMode): string {
+  return "all";
+}
+
+function isSetEqual(left: Set<string>, right: Set<string>): boolean {
+  if (left.size !== right.size) {
+    return false;
+  }
+
+  for (const value of left) {
+    if (!right.has(value)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function RecordsArea({
   mode,
   presetClientId,
@@ -702,21 +648,25 @@ export function RecordsArea({
   mode: RecordsAreaMode;
   presetClientId?: string;
 }) {
+  const queryClient = useQueryClient();
+  const contactDefaultValue = defaultContactFilter(mode, presetClientId);
+  const dateDefaultValue = defaultDateAddedFilter();
+  const pageSizeDefaultValue = defaultPageSize();
   const [search, setSearch] = useState("");
-  const [statuses, setStatuses] = useState<StatusFilter[]>(
-    defaultStatusFilters(),
-  );
-  const [dateAdded, setDateAdded] = useState<DateAddedFilter>(
-    defaultDateAddedFilter(),
-  );
-  const [pageSize, setPageSize] = useState<PageSize>(defaultPageSize());
-  const [contactIds, setContactIds] = useState<string[]>(
-    defaultContactFilters(mode, presetClientId),
-  );
-  const [fileTypes, setFileTypes] = useState<string[]>(
-    defaultFileTypeFilters(mode),
+  const [statusValue, setStatusValue] = useState<SelectValueWithAll>("all");
+  const [dateAdded, setDateAdded] = useState<DateAddedFilter>(dateDefaultValue);
+  const [pageSize, setPageSize] = useState<PageSize>(pageSizeDefaultValue);
+  const [contactValue, setContactValue] = useState<string>(contactDefaultValue);
+  const [fileTypeValue, setFileTypeValue] = useState<string>(
+    defaultFileTypeFilter(mode),
   );
   const [offset, setOffset] = useState(0);
+  const [addRecordOpen, setAddRecordOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setContactValue(contactDefaultValue);
+  }, [contactDefaultValue]);
 
   const clientsQuery = useQuery(
     queryOptions({
@@ -731,11 +681,20 @@ export function RecordsArea({
     }
 
     const items = clientsQuery.data ?? [];
-    return items.map((client) => ({
-      label: client.name,
-      value: client.id,
-    }));
+
+    return [
+      { label: "Contact/s", value: "all" },
+      ...items.map((client) => ({
+        label: client.name,
+        value: client.id,
+      })),
+    ];
   }, [clientsQuery.data, mode]);
+
+  const fileTypeOptions = useMemo<FilterOption<string>[]>(
+    () => [{ label: "File Type", value: "all" }, ...typeOptions(mode)],
+    [mode],
+  );
 
   const clientNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -755,25 +714,28 @@ export function RecordsArea({
         "records-area-documents",
         mode,
         search,
-        statuses,
+        statusValue,
         dateAdded,
         pageSize,
-        contactIds,
-        fileTypes,
+        contactValue,
+        fileTypeValue,
         offset,
       ],
       queryFn: () =>
         listDocumentsServerFn({
           data: {
             q: search || undefined,
-            statuses: statuses.length > 0 ? statuses : undefined,
+            statuses:
+              statusValue === "all" ? undefined : [statusValue as StatusFilter],
             uploadedDateStart: toDateAddedStart(dateAdded),
             clientIds:
-              mode === "templates" || contactIds.length === 0
+              mode === "templates" || contactValue === "all"
                 ? undefined
-                : contactIds,
+                : [contactValue],
             documentTypes:
-              fileTypes.length > 0 ? fileTypes : modeDocumentTypeBaseline(mode),
+              fileTypeValue === "all"
+                ? modeDocumentTypeBaseline(mode)
+                : [fileTypeValue],
             sortBy: "updated_at",
             sortDirection: "desc",
             limit,
@@ -784,130 +746,114 @@ export function RecordsArea({
   );
 
   const rows = documentsQuery.data?.items ?? [];
-  const total = documentsQuery.data?.total ?? 0;
-  const visibleStart = total === 0 ? 0 : offset + 1;
-  const visibleEnd = Math.min(offset + limit, total);
+  const sourceTotal = documentsQuery.data?.total ?? 0;
+  const showDemoRows =
+    mode === "records" &&
+    !documentsQuery.isLoading &&
+    rows.length === 0 &&
+    sourceTotal === 0 &&
+    search.trim().length === 0 &&
+    statusValue === "all" &&
+    dateAdded === dateDefaultValue &&
+    fileTypeValue === "all" &&
+    contactValue === contactDefaultValue;
+  const demoRows = useMemo(() => buildDemoRows(offset, limit), [limit, offset]);
+  const tableRows = useMemo<TableDisplayRow[]>(() => {
+    if (showDemoRows) {
+      return demoRows;
+    }
 
-  const columns = useMemo(
-    () =>
-      mode === "internal"
-        ? [
-            columnHelper.accessor("title", {
-              header: "Record title",
-            }),
-            columnHelper.accessor("documentType", {
-              header: "Filetype",
-            }),
-            columnHelper.accessor("status", {
-              header: "Status",
-              cell: (info) => (
-                <span className="inline-flex rounded-full border border-[color:var(--fc-content-border)] px-2 py-0.5 text-[0.68rem] font-medium capitalize text-muted-foreground">
-                  {formatStatus(info.getValue())}
-                </span>
-              ),
-            }),
-            columnHelper.accessor("latestUploadedBy", {
-              header: "Linked user",
-              cell: (info) =>
-                info.row.original.latestUploadedBy === "-"
-                  ? "General"
-                  : info.row.original.latestUploadedBy,
-            }),
-            columnHelper.accessor("updatedAt", {
-              header: "Date modified",
-              cell: (info) => formatDate(info.getValue()),
-            }),
-            columnHelper.accessor("createdAt", {
-              header: "Date added",
-              cell: (info) => formatDate(info.getValue()),
-            }),
-          ]
-        : [
-            columnHelper.accessor("title", {
-              header: "Record title",
-            }),
-            columnHelper.accessor("documentType", {
-              header: "Filetype",
-            }),
-            columnHelper.accessor("status", {
-              header: "Status",
-              cell: (info) => (
-                <span className="inline-flex rounded-full border border-[color:var(--fc-content-border)] px-2 py-0.5 text-[0.68rem] font-medium capitalize text-muted-foreground">
-                  {formatStatus(info.getValue())}
-                </span>
-              ),
-            }),
-            columnHelper.accessor("clientId", {
-              header: "Client name",
-              cell: (info) =>
-                mode === "templates"
-                  ? "Not linked"
-                  : (clientNameById.get(info.getValue()) ?? "Unknown"),
-            }),
-            columnHelper.accessor("updatedAt", {
-              header: "Date modified",
-              cell: (info) => formatDate(info.getValue()),
-            }),
-            columnHelper.accessor("createdAt", {
-              header: "Date added",
-              cell: (info) => formatDate(info.getValue()),
-            }),
-          ],
-    [clientNameById, mode],
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      status: formatStatus(row.status),
+      contact:
+        mode === "internal"
+          ? row.latestUploadedBy === "-"
+            ? "General"
+            : row.latestUploadedBy
+          : mode === "templates"
+            ? "Not linked"
+            : (clientNameById.get(row.clientId) ?? "Unknown"),
+      filetype: formatFiletype(row.documentType),
+      dateAdded: formatDate(row.createdAt),
+      dateModified: formatDate(row.updatedAt),
+    }));
+  }, [clientNameById, demoRows, mode, rows, showDemoRows]);
+  const total = showDemoRows ? 87 : sourceTotal;
+  const pageCount = Math.max(1, Math.ceil(total / limit));
+  const pageNumber = Math.floor(offset / limit) + 1;
+  const hasNextPage = offset + limit < total;
+
+  useEffect(() => {
+    setSelectedIds((current) => {
+      const availableIds = new Set(tableRows.map((row) => row.id));
+      const preserved = new Set(
+        [...current].filter((id) => availableIds.has(id)),
+      );
+
+      if (tableRows.length === 0) {
+        return current.size === 0 ? current : preserved;
+      }
+
+      if (preserved.size > 0) {
+        return isSetEqual(current, preserved) ? current : preserved;
+      }
+
+      const seeded = new Set(
+        [tableRows[4], tableRows[5], tableRows[9]]
+          .filter((row): row is TableDisplayRow => Boolean(row))
+          .map((row) => row.id),
+      );
+
+      return isSetEqual(current, seeded) ? current : seeded;
+    });
+  }, [tableRows]);
+
+  const selectedCount = tableRows.reduce(
+    (count, row) => (selectedIds.has(row.id) ? count + 1 : count),
+    0,
   );
-
-  const table = useReactTable({
-    data: rows,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const clearSearch = () => {
-    setOffset(0);
-    setSearch("");
-  };
+  const allSelected =
+    tableRows.length > 0 && selectedCount === tableRows.length;
+  const someSelected = selectedCount > 0 && selectedCount < tableRows.length;
 
   const clearFilters = () => {
     setOffset(0);
     setSearch("");
-    setStatuses(defaultStatusFilters());
-    setDateAdded(defaultDateAddedFilter());
-    setPageSize("30");
-    setContactIds(defaultContactFilters(mode, presetClientId));
-    setFileTypes(defaultFileTypeFilters(mode));
+    setStatusValue("all");
+    setDateAdded(dateDefaultValue);
+    setPageSize(pageSizeDefaultValue);
+    setContactValue(contactDefaultValue);
+    setFileTypeValue(defaultFileTypeFilter(mode));
+  };
+
+  const refreshRecordsAfterCreate = async () => {
+    setOffset(0);
+    await queryClient.invalidateQueries({
+      queryKey: ["records-area-documents"],
+    });
   };
 
   return (
-    <div className="space-y-3">
-      <section className="rounded-2xl border border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full min-w-[17rem] flex-1">
-            <button
-              aria-hidden={search.length === 0}
-              aria-label="Clear search"
-              className={cn(
-                "absolute inset-y-0 right-0 z-10 flex w-8 cursor-pointer items-center justify-center text-[color:color-mix(in_oklch,var(--muted-foreground)_78%,transparent)] transition-[opacity,color] duration-220 ease-out hover:text-[color:var(--fc-destructive)]",
-                search.length > 0
-                  ? "opacity-100 pointer-events-auto"
-                  : "opacity-0 pointer-events-none",
-              )}
-              tabIndex={search.length > 0 ? 0 : -1}
-              type="button"
-              onClick={clearSearch}
-              onMouseDown={(event) => {
-                event.preventDefault();
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-            />
+    <div className="fc-records-shell">
+      <section className="fc-records-toolbar" data-node-id="24:194">
+        <div className="fc-records-search-row" data-node-id="24:202">
+          <Button
+            className="fc-add-record-button"
+            type="button"
+            variant="ghost"
+            onClick={() => setAddRecordOpen(true)}
+          >
+            <span>+ Add Record</span>
+          </Button>
+
+          <div className="fc-search-wrap" data-node-id="24:203">
+            <Search aria-hidden="true" className="fc-search-icon" />
             <Input
               aria-label={areaSearchPlaceholder(mode)}
               autoComplete="off"
-              className="h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] pl-8 pr-8 text-xs"
+              className="fc-search-input"
               placeholder={areaSearchPlaceholder(mode)}
               type="search"
               value={search}
@@ -917,175 +863,244 @@ export function RecordsArea({
               }}
             />
           </div>
-          <Button
-            className="h-9 gap-1.5 border border-transparent bg-[color:color-mix(in_oklch,var(--foreground)_86%,var(--background)_14%)] px-4 text-xs font-semibold text-[color:var(--background)] hover:bg-[color:color-mix(in_oklch,var(--foreground)_80%,var(--background)_20%)]"
-            type="button"
-            variant="ghost"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Add Record</span>
-          </Button>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <MultiFilterCombobox
-            className="min-w-[13rem] basis-[13rem] grow"
-            defaultValues={defaultContactFilters(mode, presetClientId)}
-            label="Contact"
+
+        <div className="fc-records-filters" data-node-id="24:195">
+          <FilterSelect
+            activeWhen={(value) => value !== "all" && value !== "none"}
+            className="fc-filter-contact"
             options={clientOptions}
-            placeholder="Contact"
-            pluralLabel="Contacts"
-            values={contactIds}
-            onChange={(nextValues) => {
+            value={contactValue}
+            onValueChange={(nextValue) => {
               setOffset(0);
-              setContactIds(nextValues);
+              setContactValue(nextValue);
             }}
           />
-          <MultiFilterCombobox
-            defaultValues={defaultStatusFilters()}
-            label="Status"
+
+          <FilterSelect
+            activeWhen={(value) => value !== "all"}
+            className="fc-filter-status"
             options={STATUS_OPTIONS}
-            placeholder="Status"
-            pluralLabel="Statuses"
-            values={statuses}
-            onChange={(nextValues) => {
+            value={statusValue}
+            onValueChange={(nextValue) => {
               setOffset(0);
-              setStatuses(nextValues);
+              setStatusValue(nextValue);
             }}
           />
-          <SingleFilterSelect
-            label="Date added"
+
+          <FilterSelect
+            activeWhen={(value) => value !== "all"}
+            className="fc-filter-date"
             options={DATE_ADDED_OPTIONS}
-            placeholder="Date added"
             value={dateAdded}
-            onChange={(nextValue) => {
+            onValueChange={(nextValue) => {
               setOffset(0);
               setDateAdded(nextValue);
             }}
           />
-          <MultiFilterCombobox
-            defaultValues={defaultFileTypeFilters(mode)}
-            label="Filetype"
-            options={typeOptions(mode)}
-            placeholder="Filetype"
-            pluralLabel="Filetypes"
-            values={fileTypes}
-            onChange={(nextValues) => {
+
+          <FilterSelect
+            activeWhen={(value) => value !== "all"}
+            className="fc-filter-filetype"
+            options={fileTypeOptions}
+            value={fileTypeValue}
+            onValueChange={(nextValue) => {
               setOffset(0);
-              setFileTypes(nextValues);
+              setFileTypeValue(nextValue);
             }}
           />
-          <SingleFilterSelect
-            label="Rows per page"
+
+          <FilterSelect
+            className="fc-filter-pagesize"
             options={PAGE_SIZES}
-            placeholder="Rows per page"
             value={pageSize}
-            onChange={(nextValue) => {
+            onValueChange={(nextValue) => {
               setOffset(0);
               setPageSize(nextValue);
             }}
           />
+
           <Button
-            className="ml-auto h-9 border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)] px-3 text-xs"
+            className="fc-reset-filters"
             type="button"
             variant="outline"
             onClick={clearFilters}
           >
-            Clear Filters
+            Reset Filters
           </Button>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-[color:var(--fc-content-border)] bg-[color:var(--fc-surface)]">
-        <Table className="text-xs">
-          <TableHeader className="[&_tr]:border-[color:var(--fc-content-border)]">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                className="border-[color:var(--fc-content-border)] hover:bg-transparent"
-                key={headerGroup.id}
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    className="h-9 px-3 text-[0.68rem] font-semibold tracking-[0.045em] uppercase"
-                    key={header.id}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+      <section className="fc-records-table-shell" data-node-id="24:243">
+        <Table className="fc-records-table">
+          <TableHeader>
+            <TableRow className="fc-records-head-row" data-node-id="24:244">
+              <TableHead className="fc-records-head-cell fc-col-select">
+                <Checkbox
+                  aria-label={
+                    allSelected ? "Deselect all rows" : "Select all rows"
+                  }
+                  checked={
+                    allSelected ? true : someSelected ? "indeterminate" : false
+                  }
+                  className="fc-records-checkbox"
+                  onCheckedChange={(checked) => {
+                    const next = new Set(selectedIds);
+
+                    if (checked === true || checked === "indeterminate") {
+                      for (const row of tableRows) {
+                        next.add(row.id);
+                      }
+                    } else {
+                      for (const row of tableRows) {
+                        next.delete(row.id);
+                      }
+                    }
+
+                    setSelectedIds(next);
+                  }}
+                />
+              </TableHead>
+              <TableHead className="fc-records-head-cell fc-col-title">
+                <span>TITLE</span>
+                <MoreVertical className="fc-header-menu" />
+              </TableHead>
+              <TableHead className="fc-records-head-cell fc-col-status">
+                <span>STATUS</span>
+                <MoreVertical className="fc-header-menu" />
+              </TableHead>
+              <TableHead className="fc-records-head-cell fc-col-contact">
+                <span>{mode === "internal" ? "LINKED USER" : "CONTACT"}</span>
+                <MoreVertical className="fc-header-menu" />
+              </TableHead>
+              <TableHead className="fc-records-head-cell fc-col-filetype">
+                <span>FILETYPE</span>
+                <MoreVertical className="fc-header-menu" />
+              </TableHead>
+              <TableHead className="fc-records-head-cell fc-col-date">
+                <span>DATE ADDED</span>
+                <MoreVertical className="fc-header-menu" />
+              </TableHead>
+              <TableHead className="fc-records-head-cell fc-col-date fc-col-last">
+                <span>DATE MODIFIED</span>
+                <MoreVertical className="fc-header-menu" />
+              </TableHead>
+            </TableRow>
           </TableHeader>
+
           <TableBody>
             {documentsQuery.isLoading ? (
-              <TableRow className="border-[color:var(--fc-content-border)] hover:bg-transparent">
-                <TableCell
-                  className="px-3 py-2.5 text-xs text-muted-foreground"
-                  colSpan={columns.length}
-                >
+              <TableRow className="fc-records-row">
+                <TableCell className="fc-records-message" colSpan={7}>
                   {areaLoadingMessage(mode)}
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <TableRow className="border-[color:var(--fc-content-border)] hover:bg-transparent">
-                <TableCell
-                  className="px-3 py-2.5 text-xs text-muted-foreground"
-                  colSpan={columns.length}
-                >
+            ) : tableRows.length === 0 ? (
+              <TableRow className="fc-records-row">
+                <TableCell className="fc-records-message" colSpan={7}>
                   {areaEmptyMessage(mode)}
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  className="border-[color:var(--fc-content-border)] hover:bg-[color:var(--fc-table-row-hover)]"
-                  key={row.id}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell className="px-3 py-2.5 text-xs" key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+              tableRows.map((row) => {
+                const selected = selectedIds.has(row.id);
+
+                return (
+                  <TableRow
+                    className={cn(
+                      "fc-records-row",
+                      selected && "fc-records-row-selected",
+                    )}
+                    key={row.id}
+                  >
+                    <TableCell className="fc-records-cell fc-cell-select">
+                      <Checkbox
+                        aria-label={`Select ${row.title}`}
+                        checked={selected}
+                        className="fc-records-checkbox"
+                        onCheckedChange={(checked) => {
+                          const next = new Set(selectedIds);
+
+                          if (checked === true || checked === "indeterminate") {
+                            next.add(row.id);
+                          } else {
+                            next.delete(row.id);
+                          }
+
+                          if (!isSetEqual(next, selectedIds)) {
+                            setSelectedIds(next);
+                          }
+                        }}
+                      />
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                    <TableCell className="fc-records-cell fc-cell-title">
+                      {row.title}
+                    </TableCell>
+                    <TableCell className="fc-records-cell fc-cell-status">
+                      {row.status}
+                    </TableCell>
+                    <TableCell className="fc-records-cell fc-cell-contact">
+                      {row.contact}
+                    </TableCell>
+                    <TableCell className="fc-records-cell fc-cell-filetype">
+                      {row.filetype}
+                    </TableCell>
+                    <TableCell className="fc-records-cell fc-cell-date">
+                      {row.dateAdded}
+                    </TableCell>
+                    <TableCell className="fc-records-cell fc-cell-date fc-col-last">
+                      {row.dateModified}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </section>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <p className="text-xs text-muted-foreground">
-          {total === 0
-            ? "No results"
-            : `Showing ${visibleStart}-${visibleEnd} of ${total}`}
+      <footer className="fc-records-footer" data-node-id="53:179">
+        <p className="fc-records-count">
+          Showing {tableRows.length} of {total} results
         </p>
-        <div className="flex items-center gap-2">
+        <div className="fc-records-pagination" data-node-id="53:181">
           <Button
-            className="h-8 border-[color:var(--fc-content-border)] px-2.5 text-xs"
+            aria-label="Previous page"
+            className="fc-page-arrow"
             disabled={offset === 0}
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={() => setOffset((current) => Math.max(0, current - limit))}
           >
-            Previous
+            <ArrowLeft className="size-[16px]" />
           </Button>
+          <p className="fc-page-label">
+            Page {pageNumber} of {pageCount}
+          </p>
           <Button
-            className="h-8 border-[color:var(--fc-content-border)] px-2.5 text-xs"
-            disabled={offset + limit >= total}
+            aria-label="Next page"
+            className="fc-page-arrow"
+            disabled={!hasNextPage}
             type="button"
-            variant="outline"
-            onClick={() => setOffset((current) => current + limit)}
+            variant="ghost"
+            onClick={() =>
+              setOffset((current) =>
+                Math.min(current + limit, Math.max(0, total - limit)),
+              )
+            }
           >
-            Next
+            <ArrowRight className="size-[16px]" />
           </Button>
         </div>
       </footer>
+
+      <AddRecordDialog
+        clients={clientsQuery.data ?? []}
+        mode={mode}
+        open={addRecordOpen}
+        onOpenChange={setAddRecordOpen}
+        onRecordCreated={refreshRecordsAfterCreate}
+      />
     </div>
   );
 }

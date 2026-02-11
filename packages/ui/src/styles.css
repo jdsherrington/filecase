@@ -130,42 +130,46 @@
 
 .fc-dropdown-content,
 .fc-select-content,
-.fc-popover-content {
+.fc-popover-content,
+.fc-tooltip-content {
   will-change: opacity, transform;
 }
 
 .fc-dropdown-content[data-state="open"],
 .fc-select-content[data-state="open"],
-.fc-popover-content[data-state="open"] {
-  animation: fc-pop-in 170ms ease-out;
+.fc-popover-content[data-state="open"],
+.fc-tooltip-content[data-state="delayed-open"] {
+  animation: fc-pop-in 170ms var(--fc-motion-ease-global, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .fc-dropdown-content[data-state="closed"],
 .fc-select-content[data-state="closed"],
-.fc-popover-content[data-state="closed"] {
-  animation: fc-pop-out 150ms ease-in;
+.fc-popover-content[data-state="closed"],
+.fc-tooltip-content[data-state="closed"] {
+  animation: fc-pop-out 150ms var(--fc-motion-ease-global, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .fc-dialog-overlay[data-state="open"] {
-  animation: fc-fade-in 160ms ease-out;
+  animation: fc-fade-in 160ms var(--fc-motion-ease-global, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .fc-dialog-overlay[data-state="closed"] {
-  animation: fc-fade-out 120ms ease-in;
+  animation: fc-fade-out 120ms var(--fc-motion-ease-global, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .fc-dialog-content[data-state="open"] {
-  animation: fc-dialog-in 180ms ease-out;
+  animation: fc-dialog-in 180ms var(--fc-motion-ease-global, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .fc-dialog-content[data-state="closed"] {
-  animation: fc-dialog-out 140ms ease-in;
+  animation: fc-dialog-out 140ms var(--fc-motion-ease-global, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 @media (prefers-reduced-motion: reduce) {
   .fc-dropdown-content,
   .fc-select-content,
   .fc-popover-content,
+  .fc-tooltip-content,
   .fc-dialog-overlay,
   .fc-dialog-content {
     animation: none !important;

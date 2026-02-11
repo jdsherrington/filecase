@@ -27,7 +27,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, onCloseAutoFocus, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -36,6 +36,22 @@ const DialogContent = React.forwardRef<
         "fc-dialog-content fixed left-1/2 top-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border bg-popover/50 p-6 shadow-lg backdrop-blur-md",
         className,
       )}
+      onCloseAutoFocus={(event) => {
+        onCloseAutoFocus?.(event);
+
+        if (event.defaultPrevented) {
+          return;
+        }
+
+        event.preventDefault();
+
+        requestAnimationFrame(() => {
+          const focused = document.activeElement;
+          if (focused instanceof HTMLElement) {
+            focused.blur();
+          }
+        });
+      }}
       {...props}
     >
       {children}
