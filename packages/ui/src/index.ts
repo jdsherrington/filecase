@@ -1,6 +1,23 @@
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Checkbox } from "./components/checkbox";
 export {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuPortal,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "./components/context-menu";
+export {
   Command,
   CommandEmpty,
   CommandGroup,

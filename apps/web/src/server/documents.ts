@@ -653,6 +653,71 @@ export async function updateDocumentStatus(input: {
   };
 }
 
+export async function updateDocumentDetails(input: {
+  user: TenantUser;
+  documentId: string;
+  title: string;
+  documentType: string;
+  requestContext?: AuditRequestContext;
+}) {
+  const canWrite = await canWriteDocument(input.user, input.documentId);
+
+  if (!canWrite) {
+    throw new Error("FORBIDDEN");
+  }
+
+  const doc = await db.query.documents.findFirst({
+    where: and(
+      eq(documents.id, input.documentId),
+      eq(documents.firmId, input.user.firmId),
+    ),
+  });
+
+  if (!doc) {
+    throw new Error("NOT_FOUND");
+  }
+
+  const nextTitle = input.title.trim();
+  const nextDocumentType = input.documentType.trim();
+
+  if (nextTitle.length === 0 || nextDocumentType.length === 0) {
+    throw new Error("MISSING_FIELD");
+  }
+
+  const now = new Date();
+
+  await db
+    .update(documents)
+    .set({
+      title: nextTitle,
+      documentType: nextDocumentType,
+      updatedAt: now,
+    })
+    .where(eq(documents.id, doc.id));
+
+  await logAuditEvent({
+    firmId: input.user.firmId,
+    userId: input.user.id,
+    action: "edit",
+    entityType: "document",
+    entityId: doc.id,
+    metadata: {
+      previous_title: doc.title,
+      new_title: nextTitle,
+      previous_document_type: doc.documentType,
+      new_document_type: nextDocumentType,
+      client_id: doc.clientId,
+      engagement_id: doc.engagementId,
+      document_id: doc.id,
+    },
+    requestContext: input.requestContext,
+  });
+
+  return {
+    ok: true,
+  };
+}
+
 export async function bulkUpdateDocumentStatus(input: {
   user: TenantUser;
   documentIds: string[];
@@ -719,6 +784,100 @@ export async function bulkUpdateDocumentStatus(input: {
       document_ids: input.documentIds,
       changes: {
         status: input.nextStatus,
+      },
+      count: input.documentIds.length,
+    },
+    requestContext: input.requestContext,
+  });
+
+  return {
+    ok: true,
+    count: input.documentIds.length,
+  };
+}
+
+export async function bulkUpdateDocumentProfile(input: {
+  user: TenantUser;
+  documentIds: string[];
+  clientId: string;
+  engagementId: string;
+  status: DocumentStatus;
+  requestContext?: AuditRequestContext;
+}) {
+  if (input.documentIds.length === 0) {
+    throw new Error("NO_DOCUMENTS");
+  }
+
+  const firstDocumentId = input.documentIds[0];
+  if (!firstDocumentId) {
+    throw new Error("NO_DOCUMENTS");
+  }
+
+  const canWriteToTarget = await canCreateDocumentVersion({
+    user: input.user,
+    clientId: input.clientId,
+    engagementId: input.engagementId,
+  });
+  if (!canWriteToTarget) {
+    throw new Error("FORBIDDEN");
+  }
+
+  const scopedDocuments = await db.query.documents.findMany({
+    where: and(
+      eq(documents.firmId, input.user.firmId),
+      inArray(documents.id, input.documentIds),
+    ),
+  });
+
+  if (scopedDocuments.length !== input.documentIds.length) {
+    throw new Error("NOT_FOUND");
+  }
+
+  for (const doc of scopedDocuments) {
+    if (!(await canWriteDocument(input.user, doc.id))) {
+      throw new Error("FORBIDDEN");
+    }
+
+    if (
+      !canTransitionDocumentStatus({
+        role: input.user.role,
+        currentStatus: doc.status,
+        nextStatus: input.status,
+      })
+    ) {
+      throw new Error("INVALID_STATUS_TRANSITION");
+    }
+  }
+
+  const now = new Date();
+
+  await db
+    .update(documents)
+    .set({
+      clientId: input.clientId,
+      engagementId: input.engagementId,
+      status: input.status,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(documents.firmId, input.user.firmId),
+        inArray(documents.id, input.documentIds),
+      ),
+    );
+
+  await logAuditEvent({
+    firmId: input.user.firmId,
+    userId: input.user.id,
+    action: "bulk_update",
+    entityType: "document",
+    entityId: firstDocumentId,
+    metadata: {
+      document_ids: input.documentIds,
+      changes: {
+        client_id: input.clientId,
+        engagement_id: input.engagementId,
+        status: input.status,
       },
       count: input.documentIds.length,
     },

@@ -74,9 +74,22 @@ export const documentStatusUpdateSchema = z.object({
   nextStatus: documentStatusSchema,
 });
 
+export const documentDetailsUpdateSchema = z.object({
+  documentId: z.string().uuid(),
+  title: z.string().trim().min(1),
+  documentType: z.string().trim().min(1),
+});
+
 export const bulkDocumentStatusUpdateSchema = z.object({
   documentIds: z.array(z.string().uuid()).min(1).max(200),
   nextStatus: documentStatusSchema,
+});
+
+export const bulkDocumentProfileUpdateSchema = z.object({
+  documentIds: z.array(z.string().uuid()).min(1).max(200),
+  clientId: z.string().uuid(),
+  engagementId: z.string().uuid(),
+  status: documentStatusSchema,
 });
 
 export const paginatedAuditQuerySchema = z.object({

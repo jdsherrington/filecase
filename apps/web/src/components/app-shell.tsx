@@ -114,33 +114,39 @@ export function AppShell({
   });
   const matchRoute = useMatchRoute();
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    const fromDocument = document.documentElement.dataset.fcSidebarCollapsed;
-    if (fromDocument === "true") {
-      return true;
-    }
-
-    if (fromDocument === "false") {
-      return false;
-    }
-
-    try {
-      return (
-        window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true"
-      );
-    } catch {
-      return false;
-    }
-  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hasResolvedSidebarPreference, setHasResolvedSidebarPreference] =
+    useState(false);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   useEffect(() => {
+    let nextCollapsed = false;
+
+    const fromDocument = document.documentElement.dataset.fcSidebarCollapsed;
+    if (fromDocument === "true") {
+      nextCollapsed = true;
+    } else if (fromDocument === "false") {
+      nextCollapsed = false;
+    } else {
+      try {
+        nextCollapsed =
+          window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true";
+      } catch {
+        nextCollapsed = false;
+      }
+    }
+
+    setIsSidebarCollapsed(nextCollapsed);
+    setHasResolvedSidebarPreference(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasResolvedSidebarPreference) {
+      return;
+    }
+
     try {
       window.localStorage.setItem(
         SIDEBAR_COLLAPSED_STORAGE_KEY,
@@ -152,7 +158,7 @@ export function AppShell({
     } catch {
       // Ignore storage errors and keep UI functional.
     }
-  }, [isSidebarCollapsed]);
+  }, [hasResolvedSidebarPreference, isSidebarCollapsed]);
 
   const isRouteActive = (route: NavItem["to"]): boolean => {
     const fuzzy = route !== "/";

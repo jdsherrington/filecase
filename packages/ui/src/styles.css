@@ -129,6 +129,7 @@
 }
 
 .fc-dropdown-content,
+.fc-context-content,
 .fc-select-content,
 .fc-popover-content,
 .fc-tooltip-content {
@@ -136,6 +137,7 @@
 }
 
 .fc-dropdown-content[data-state="open"],
+.fc-context-content[data-state="open"],
 .fc-select-content[data-state="open"],
 .fc-popover-content[data-state="open"],
 .fc-tooltip-content[data-state="delayed-open"] {
@@ -143,6 +145,7 @@
 }
 
 .fc-dropdown-content[data-state="closed"],
+.fc-context-content[data-state="closed"],
 .fc-select-content[data-state="closed"],
 .fc-popover-content[data-state="closed"],
 .fc-tooltip-content[data-state="closed"] {
@@ -167,6 +170,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fc-dropdown-content,
+  .fc-context-content,
   .fc-select-content,
   .fc-popover-content,
   .fc-tooltip-content,

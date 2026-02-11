@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  bulkDocumentProfileUpdateSchema,
   bulkDocumentStatusUpdateSchema,
+  documentDetailsUpdateSchema,
   documentIdSchema,
   documentStatusUpdateSchema,
   documentVersionDownloadSchema,
@@ -12,12 +14,14 @@ import { getRequest } from "@tanstack/react-start/server";
 
 import { getAuditRequestContext } from "./audit";
 import {
+  bulkUpdateDocumentProfile,
   bulkUpdateDocumentStatus,
   createDocumentReplacementVersion,
   createDocumentWithInitialVersion,
   createSignedDownloadForVersion,
   getDocumentDetail,
   listDocuments,
+  updateDocumentDetails,
   updateDocumentStatus,
 } from "./documents";
 import { getEngagementOverview, listEngagementsForClient } from "./engagements";
@@ -357,6 +361,63 @@ export const bulkUpdateDocumentStatusServerFn = createServerFn({
         user: tenant.user,
         documentIds: data.documentIds,
         nextStatus: data.nextStatus,
+        requestContext,
+      });
+      logRequestSuccess(scope, {
+        firmId: tenant.firmId,
+        userId: tenant.user.id,
+      });
+      return result;
+    } catch (error) {
+      logRequestFailure(scope, error);
+      throw error;
+    }
+  });
+
+export const bulkUpdateDocumentProfileServerFn = createServerFn({
+  method: "POST",
+})
+  .inputValidator(bulkDocumentProfileUpdateSchema)
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    const scope = startRequestLog(request, "documents.bulkUpdateProfile");
+    try {
+      const tenant = await resolveTenantContext(request);
+      const requestContext = getAuditRequestContext(request);
+
+      const result = await bulkUpdateDocumentProfile({
+        user: tenant.user,
+        documentIds: data.documentIds,
+        clientId: data.clientId,
+        engagementId: data.engagementId,
+        status: data.status,
+        requestContext,
+      });
+      logRequestSuccess(scope, {
+        firmId: tenant.firmId,
+        userId: tenant.user.id,
+      });
+      return result;
+    } catch (error) {
+      logRequestFailure(scope, error);
+      throw error;
+    }
+  });
+
+export const updateDocumentDetailsServerFn = createServerFn({ method: "POST" })
+  .inputValidator(documentDetailsUpdateSchema)
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    const scope = startRequestLog(request, "documents.updateDetails");
+    try {
+      const tenant = await resolveTenantContext(request);
+      const requestContext = getAuditRequestContext(request);
+
+      const result = await updateDocumentDetails({
+        user: tenant.user,
+        documentId: data.documentId,
+        title: data.title,
+        documentType: data.documentType,
         requestContext,
       });
       logRequestSuccess(scope, {
