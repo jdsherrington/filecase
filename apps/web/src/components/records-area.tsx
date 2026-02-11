@@ -180,18 +180,6 @@ function areaLoadingMessage(mode: RecordsAreaMode): string {
   return "Loading records...";
 }
 
-function areaEmptyMessage(mode: RecordsAreaMode): string {
-  if (mode === "templates") {
-    return "No templates match these filters.";
-  }
-
-  if (mode === "internal") {
-    return "No internal records match these filters.";
-  }
-
-  return "No records match these filters.";
-}
-
 function formatStatus(value: string): string {
   return value
     .replace(/_/g, " ")
@@ -1890,6 +1878,7 @@ export function RecordsArea({
   const contextAllRowsAlreadyStatus = (status: StatusFilter) =>
     contextRows.length > 0 &&
     contextRows.every((row) => row.statusValue === status);
+  const showNoResultsOverlay = !documentsQuery.isLoading && tableRows.length === 0;
 
   return (
     <div className="fc-records-shell" ref={recordsShellRef}>
@@ -2108,12 +2097,6 @@ export function RecordsArea({
                     {areaLoadingMessage(mode)}
                   </TableCell>
                 </TableRow>
-              ) : tableRows.length === 0 ? (
-                <TableRow className="fc-records-row">
-                  <TableCell className="fc-records-message" colSpan={7}>
-                    {areaEmptyMessage(mode)}
-                  </TableCell>
-                </TableRow>
               ) : (
                 tableRows.map((row) => {
                   const selected = selectedIds.has(row.id);
@@ -2224,6 +2207,15 @@ export function RecordsArea({
               )}
             </TableBody>
           </Table>
+          {showNoResultsOverlay ? (
+            <div
+              className="fc-records-empty-overlay"
+              onTouchMove={(event) => event.preventDefault()}
+              onWheel={(event) => event.preventDefault()}
+            >
+              <p className="fc-records-empty-label">No results</p>
+            </div>
+          ) : null}
         </section>
 
         <DropdownMenuContent
@@ -2408,35 +2400,37 @@ export function RecordsArea({
             Showing {tableRows.length} of {total} results
           </p>
         </div>
-        <div className="fc-records-pagination" data-node-id="53:181">
-          <Button
-            aria-label="Previous page"
-            className="fc-page-arrow"
-            disabled={offset === 0}
-            type="button"
-            variant="ghost"
-            onClick={() => setOffset((current) => Math.max(0, current - limit))}
-          >
-            <ArrowLeft className="size-[16px]" />
-          </Button>
-          <p className="fc-page-label">
-            Page {pageNumber} of {pageCount}
-          </p>
-          <Button
-            aria-label="Next page"
-            className="fc-page-arrow"
-            disabled={!hasNextPage}
-            type="button"
-            variant="ghost"
-            onClick={() =>
-              setOffset((current) =>
-                Math.min(current + limit, Math.max(0, total - limit)),
-              )
-            }
-          >
-            <ArrowRight className="size-[16px]" />
-          </Button>
-        </div>
+        {pageCount > 1 ? (
+          <div className="fc-records-pagination" data-node-id="53:181">
+            <Button
+              aria-label="Previous page"
+              className="fc-page-arrow"
+              disabled={offset === 0}
+              type="button"
+              variant="ghost"
+              onClick={() => setOffset((current) => Math.max(0, current - limit))}
+            >
+              <ArrowLeft className="size-[16px]" />
+            </Button>
+            <p className="fc-page-label">
+              Page {pageNumber} of {pageCount}
+            </p>
+            <Button
+              aria-label="Next page"
+              className="fc-page-arrow"
+              disabled={!hasNextPage}
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                setOffset((current) =>
+                  Math.min(current + limit, Math.max(0, total - limit)),
+                )
+              }
+            >
+              <ArrowRight className="size-[16px]" />
+            </Button>
+          </div>
+        ) : null}
       </footer>
 
       <AddRecordDialog
